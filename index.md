@@ -71,12 +71,13 @@ secure. The extension does not change the gates; it adds a design track.
 | [`LR-004`](lab/LR-004-copal-platform-and-kernel.md) | Porting to copal/Alpine: package mapping, bring-up sequence, kernel tuning options and how each is admitted |
 | [`LR-005`](lab/LR-005-coherent-915mhz-receiver-options-and-parallel-feed.md) | FTFE vs KrakenSDR vs dongles vs SX1262 nodes; the "phased array for LoRa itself"; wider spectrum; the parallel-feed test |
 | [`LR-006`](lab/LR-006-max2851-and-rp1-datasheet-review.md) | What the MAX2851 and RP1 datasheets changed; LO-spur replicas; what is still missing |
+| [`LR-007`](lab/LR-007-backlog-review-and-resequencing.md) | Review of the backlog: cross-phase dependencies, checks that could not run, missing entries (control plane, release procedure, procurement, module-port fallback, Part 97 decision), the re-sequencing adopted, T24 |
 
 ### Analysis, sources, vendoring, tools
 
 | Path | Content |
 | --- | --- |
-| [`analysis/linkbudget.py`](analysis/linkbudget.py) ([README](analysis/README.md)) | Every `[D]` number, tables T1–T23 |
+| [`analysis/linkbudget.py`](analysis/linkbudget.py) ([README](analysis/README.md)) | Every `[D]` number, tables T1–T24 |
 | [`crates/README.md`](crates/README.md) | The qrf Cargo workspace: `qrf-analysis` (byte-identical Rust port of the analysis, done) and the crates to come |
 | [`Makefile`](Makefile) | `make check`: tag linter, link and citation checks, analysis, shell syntax, Rust build and test, Rust/Python parity, cargo-deny when installed |
 | [`docs/resources-manifest.md`](docs/resources-manifest.md) | What is in gitignored `resources/`, from where, when, which commit, which sha256 |
@@ -107,9 +108,11 @@ design track          P0 ─ P1 ─ P2 ───────────── P
                                    nodes, Pico)   -up   copal layer
 ```
 
-P0–P2 need no tile and run now. P3 onward needs the kit. A design-track
-entry that rests on an open conjecture (listed in the risk register) cannot
-be marked done until the gate that closes the conjecture is signed.
+P0 (standing) and P1 need no tile and run now; P2 follows P1's exit check
+and the purchases; P3 onward needs the kit (re-sequenced 2026-10-08, LR-007).
+A design-track entry that rests on an open conjecture (listed in the risk
+register) cannot be marked done until the gate that closes the conjecture is
+signed.
 
 ## Conventions on one screen
 
@@ -123,6 +126,6 @@ be marked done until the gate that closes the conjecture is signed.
 ## State on 2026-10-08
 
 - Gates: G00–G04 PASS; G05 and G06 OPEN on bench work; G07 DRAFT.
-- Backlog: 53 open (0 in progress), 16 done, 0 dropped; current phase P0 (ledger hygiene), P1 (Rust workspace with simulated feeds) and P2 (field tools) can run before the kit arrives.
+- Backlog: 61 open (0 in progress), 16 done, 0 dropped; re-sequenced 2026-10-08 (LR-007): P0 (standing: ledger, the Part 97 decision, procurement, field work with the nodes in hand) and P1 (Rust workspace with simulated feeds, the critical path) run now; P2 (field tools) follows R-P1 and the purchases; P3 onward wait for the kit.
 - Sources in hand: vendor repository at commit `8b61ae5`, schematic export 2026-05-22, MAX2850, MAX2851, MAX2871, SKY65404-31, SE5004L-EK1, SX1261/2 and RP1 datasheets, fourteen CFR sections, KrakenSDR documentation, Meshtastic firmware at `364a111`, `quadrf-mesh` at `ad3ed31`. Missing: the SE5004L device data sheet (DST-00316, for saturated power) and a current SX1261/2 revision (drop them in the share; see LR-002 P1).
 - Headline numbers: the tile cannot tune below 4900 MHz (datasheet-backed); the Part 15 EIRP ceiling at 915 MHz is 36 dBm for any antenna; the tile LO's −42 dBc spurs sit above the 8-bit floor; four interleaved channels at 26 MSPS use 59 % of the CSI link; the whole-band channeliser costs about 0.73 of one core; the datasheet-typical receive NF is 1.3 dB and the PA is 26 dBm linear per element.

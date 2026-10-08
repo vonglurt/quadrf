@@ -10,7 +10,7 @@ The Rust software of SPEC-008 lives here, one crate per responsibility
 
 | Crate | Responsibility (SPEC-008) | State 2026-10-08 |
 | --- | --- | --- |
-| `qrf-analysis` | Rust port of `analysis/linkbudget.py`, tables T1–T23; the first Rust artefact and the parity oracle for the numbers in every document | byte-identical to the Python output (`make parity`) |
+| `qrf-analysis` | Rust port of `analysis/linkbudget.py`, tables T1–T24; the first Rust artefact and the parity oracle for the numbers in every document | byte-identical to the Python output (`make parity`) |
 | `qrf-core` | types, configuration, time (S-008-12) | skeleton (`NAME` constant and a test); real types come with R-02/R-03 |
 | `qrf-mipi` | `/dev/csi_stream0` ring and ioctl bindings, de-interleave (S-008-2) | skeleton: `lib.rs` names its statements; real work is R-03 |
 | `qrf-jtag` | transceiver register programming through the CSI node's JTAG ioctls (S-008-15) | skeleton: `lib.rs` names its statements; real work is R-04 |

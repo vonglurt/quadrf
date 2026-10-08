@@ -462,4 +462,32 @@ fn main() {
         );
     }
     println!("  SX126x synthesiser phase noise at 868/915 MHz: -75/-95/-100/-120/-135 dBc/Hz at 1k/10k/100k/1M/10M [S]; step 0.95 Hz; LDRO recommended for Tsym >= 16.38 ms [S]");
+    line();
+    println!("T24 SoapyRemote fallback (backlog P-03b): CS8 streamed from the vendor image over the Pi 5's Gigabit Ethernet (RP1 datasheet: GEM_GXL MAC, 10/100/1000 Mbps) [S]+[D]");
+    let gbe = 1e9f64;
+    // TCP payload per Ethernet wire slot: 1500 B MTU - 40 B IP+TCP headers, over 1500 + 14 + 4 + 8 + 12 B framing [D]
+    let eff = 1460.0 / 1538.0f64;
+    println!(
+        "  usable TCP payload at 1500 B MTU: {:4.0} Mbit/s ({:4.1} % of line rate); a stream fits when its rate is below that",
+        eff * gbe / 1e6,
+        100.0 * eff
+    );
+    for (label, ch, rate) in [
+        ("4 ch, 26 MSPS (hardware rate)", 4i64, 26e6f64),
+        ("4 ch, 13 MSPS", 4, 13e6),
+        ("4 ch, 6.5 MSPS", 4, 6.5e6),
+        ("2 ch, 26 MSPS", 2, 26e6),
+        ("1 ch, 26 MSPS", 1, 26e6),
+    ] {
+        let bps = ch as f64 * rate * 2.0 * 8.0;
+        let fits = if bps <= eff * gbe { "fits" } else { "does not fit" };
+        println!(
+            "  {label:30} CS8 {:5.2} Gbit/s = {:4.0} % of line rate; band seen per channel {:5.1} MHz = {:4.0} of the 104 slots; {fits}",
+            bps / 1e9,
+            100.0 * bps / gbe,
+            rate / 1e6,
+            rate / 250e3
+        );
+    }
+    println!("  -> whole-band coherent capture (4 ch x 26 MSPS) never crosses the LAN; the fallback gives the whole band on two channels or half of it on all four (83 %, marginal), or a quarter of it on all four with margin: enough for bring-up (P-04), the register observation (R-04) and a bearing check on a CW source, not for the G05 criterion (5) load test");
 }

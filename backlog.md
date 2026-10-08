@@ -3,9 +3,10 @@
 <!-- SPDX-License-Identifier: MIT -->
 
 Work that is known and not yet done, in the order it should be done. Phases
-are entered in sequence; a phase's **exit check** is the last entry in it.
-The reasoning behind the entries is in the lab reports named in each phase;
-the behaviour each entry must deliver is in the spec statement it names.
+P1–P7 are entered in sequence; a phase's **exit check** is the last entry in
+it. P0 is a standing phase (see *Sequencing*). The reasoning behind the
+entries is in the lab reports named in each phase; the behaviour each entry
+must deliver is in the spec statement it names.
 
 ## How to use this
 
@@ -18,56 +19,81 @@ the behaviour each entry must deliver is in the spec statement it names.
    done before the gate that closes the conjecture is signed
    (`investigations/README.md`).
 
+## Sequencing (re-sequenced 2026-10-08 after the review in `lab/LR-007-backlog-review-and-resequencing.md`)
+
+- **P0 is standing.** Its entries are lookups that need a browser or a
+  second reader, one licensing decision, the procurement list, and field
+  work with the nodes already in hand. It runs concurrently with P1, has no
+  exit check and never blocks P1; its entries should be done before the kit
+  arrives.
+- **P1 is the critical path** and runs now on the development VM; only the
+  R-07 budget needs a Pi 5, and no entry needs the tile. The order inside P1
+  is the order of dependency: bus, oracle, demodulator, ring mock, DSP,
+  overlay, supervisor, interoperability, control plane, release procedure,
+  exit check.
+- **P2 is entered when R-P1 passes and the dongle and the stick (D-09) are
+  on the desk.** F-01, F-02 and F-05 moved to P0 because they need no qrf
+  software.
+- **P3 onward wait for the kit** (vendor date 2026-11-30). P-03b keeps data
+  flowing if the kernel-module port stalls.
+- Opinions on duration are in LR-007 §V, not here.
+
 | Prefix | Means | Where |
 | --- | --- | --- |
 | D | documents and ledger | this repository |
 | A | analysis scripts | `analysis/` |
-| V | vendored sources, licences, regulatory reading | `vendor/`, `resources/`, `docs/resources-manifest.md` |
+| V | vendored sources, licences, regulatory reading, third-party test tools | `vendor/`, `resources/`, `docs/resources-manifest.md` |
 | R | Rust software | the `qrf` Cargo workspace at the repository root (`Cargo.toml`, `crates/`) |
 | P | platform: copal, kernel, services | copal repository playbook + `platform/` here |
 | H | hardware: tile bench, FTFE, apertures, HATs | `investigations/records/` |
 | F | field tools, nodes, firmware, field tests | `investigations/G07`, `investigations/records/` |
 | S | system-level tests | `investigations/records/` |
 
-**Standing:** 53 open · 0 in progress · 16 done · 0 dropped. Written 2026-10-08.
+**Standing:** 61 open · 0 in progress · 16 done · 0 dropped. Written 2026-10-08; re-sequenced 2026-10-08 (LR-007).
 
 ---
 
 ## Open
 
-### P0 — Ledger, sources and analysis hygiene (now; no hardware)
+### P0 — Standing: ledger, sources, decisions, procurement and field work with hardware in hand (now; concurrent with P1; no tile, no qrf software)
 
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
-| D-05 | Second read of the revision-2 additions (SPEC-001 S-001-26…36, SPEC-002 S-002-14…22, SPEC-004 S-004-9…12, SPEC-005 S-005-20…22) and of SPEC-008…011; each `[S]` opened at its cited line | process §3.1 | Reader's initials and date in each revision table; status returns to Reviewed |
+| D-05a | Second read by the user of SPEC-001 rev 2–3 (S-001-26…42) and SPEC-005 rev 2 (S-005-20…22), the hardware and regulatory specs: each `[S]` opened at its cited line | process §3.1 | Reader's initials and date in both revision tables; status returns to Reviewed |
+| D-05b | Second read, by a session that did not write them, of SPEC-002 rev 2 (S-002-14…22), SPEC-003 rev 2 (S-003-12…15), SPEC-004 rev 2 (S-004-9…12) and SPEC-008…011: each `[S]` opened at its cited line; the reviewer named | process §3.1 | Reviewer and date in each revision table; status returns to Reviewed |
 | V-02b | Import the SE5004L *device* data sheet (DST-00316; the file in hand is the evaluation-kit sheet) for saturated power and P1dB | SPEC-001 U-001-7 | `import-shared.sh` reports it; S-001-9/40 retagged; U-001-7 closed |
-| V-02c | Fetch the current SX1261/2 datasheet revision from semtech.com (the copy in hand is Rev 1.1, 2017) and diff the values used in S-003-12…15 | SPEC-003 U-003-2 | Revision and date recorded in SPEC-003's revision table; any changed value updated |
+| V-02c | Fetch, in a browser (semtech.com returns an interstitial to scripts), the current SX1261/2 datasheet revision (the copy in hand is Rev 1.1, 2017) and diff the values used in S-003-12…15 | SPEC-003 U-003-2 | Revision and date recorded in SPEC-003's revision table; any changed value updated |
 | V-04 | Read the FCC grants of every module in hand at fcc.gov/oet/ea/fccid (class, frequency rows, grant notes). Needs a browser: apps.fcc.gov returns "Access Denied" to scripted requests and fccid.io a JavaScript challenge (2026-10-08) | U-005-1, U-005-4 | SPEC-005 S-005-22 retagged `[S]` or deleted; a table of FCC IDs in G07 §7 |
 | V-06 | Re-check §15.247 and §97.311 at ecfr.gov before any transmission campaign | U-005-2 | Date and "no change" or the diff recorded in SPEC-005's revision table |
+| V-07a | Decide now whether licensed (Part 97) operation is part of the plan: it is the only regime in which the 915 MHz transmit array (P7) and G06's licensed branch have lawful purpose (F.06.11), and a licence has lead time. If yes, obtain the licence and record the callsign | G06 F.06.11; SPEC-005 S-005-14…18 | Decision, date and, if yes, the callsign recorded in a dated G06 addendum and in this file; if no, P7 and V-07b move to Dropped |
+| D-09 | Procurement list `docs/procurement.md`, one row per part an open entry needs: RTL-SDR dongle and USB SX1262 stick (F-03, F-04, F-05); FTFE evaluation boards per F.05.13 and SPEC-007 S-007-15 (915 MHz BPF, LNA, mixer (U-007-3), MAX2871-class synthesiser board, 4-way divider, 5.5 GHz BPF, pads) (H-04, H-05); the 164 mm 2 × 2 aperture: monopoles, ground plane, SMA feeds (H-06); a PPS-capable GNSS receiver (H-08); active cooling for the Pi 5 (P-08); a Pi 5 for the R-07 budget if none is on the desk before the kit; the KrakenSDR as an option (H-07). Columns: candidate part, vendor, unit cost, lead time, needed-by date derived from the phase it unblocks, order date, arrival date | F.05.13; U-007-3; LR-005 §VI.1; LR-007 §VI | Every H- and F- entry and R-07 cites a row; every row has a needed-by date; the dongle and stick rows carry order dates |
+| F-01 | Inventory: each ESP32 node's board, radio IC, firmware tag, max `tx_power`, antenna, FCC ID; the Pico HAT's model, band and IC | G07 §7 | Table in G07 §7 with every row `[S]` |
+| F-02 | Flash all nodes with one firmware tag, one preset, one channel, one `tx_power`; store `meshtastic --info` dumps | G07 §3 | Dumps under `resources/measurements/` listed in the manifest with sha256 |
+| F-05 | Run G07 T-1…T-4 (bandwidth, free-space law, Yagi gain, repeater budgets) with a spectrum analyser, or with the dongle (D-09), the `rtl-sdr` tools and a calibrated attenuator (G07 §8) | G07 | Four `M-nnn` records filed; residuals explained |
 
-### P1 — Rust workspace with simulated feeds (no hardware)
+### P1 — Rust workspace with simulated feeds (now; the critical path; the VM, plus any Pi 5 for the R-07 budget)
 
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
 | R-02 | `qrf-bus`: protobuf schema `qrf.v1` (`Header`, `Spectrum`, `Occupancy`, `Bearing`, `LoraFrame`, `Scatter`, `Calibration`, `Health`) and ZeroMQ PUB/SUB transport | SPEC-009 S-009-4/5/9 | A simulated plug-in publishes all eight types; a subscriber decodes them; rate limits enforced (S-009-10) |
-| R-03 | `qrf-mipi`: ring and ioctl bindings (`CSI_IOC_*`, `DSI_IOC_*` numbers derived from magic/number/size), de-interleave with scalar reference and NEON kernel, a mock device backed by a file | SPEC-002 S-002-14…17; SPEC-008 S-008-5 | Property test: NEON == scalar on 10⁶ random spans; mock replays a recorded ring at 208 MB/s without loss on the VM |
-| R-06 | ZeroMQ interoperability: the native `zeromq` crate against pyzmq and a GNU Radio ZMQ source block | U-008-3 | 10 000 messages each way, none lost or reordered |
-| R-07 | `qrf-dsp`: polyphase channeliser (M = 128, P = 8), CFAR detector, two-element phase-difference bearing, 4 × 4 covariance + MUSIC; criterion benchmarks | SPEC-008 S-008-6; T19 | On the Pi 5 (or the VM's 4 cores as a proxy): 4 ch × 26 MSPS channeliser ≤ 0.8 core; bearing error on simulated plane waves ≤ 0.1° at 20 dB SNR |
-| R-08 | `qrf-lora`: CSS demodulator (SF 7–12, BW 125/250/500 kHz, sync 0x2B, explicit header, CRC, LDRO) and modulator | SPEC-003 S-003-1/7; SPEC-008 S-008-6 | Decodes 1 000 frames generated by `gr-lora_sdr` (test oracle) at SF7/500 kHz, SNR −5 dB, PER ≤ 10 %; and SF11/250 kHz at −15 dB, PER ≤ 10 % |
+| V-08 | Test oracle for R-06 and R-08: build `gr-lora_sdr` at `862746d` (GPL-3; `resources/repos/gr-lora_sdr`; a separate process, never linked) against the VM's `gnuradio` 3.10.12 (installed, as is `pyzmq` 27.1); `scripts/make-corpus.py` (run with `python3 -I`) writes an I/Q corpus to `resources/corpus/` (gitignored): for each cell of {SF 7, 9, 11, 12} × {125, 250, 500 kHz} × {SNR −20…+10 dB in 5 dB steps} 100 frames, and 1 000 frames in the two R-08 cells, each of known payload with AWGN, a carrier offset and a sample-time offset, as CS8 at an integer oversampling of the bandwidth with a JSON sidecar of the truth; the oracle's own receiver re-decodes every cell. Fallback if the module does not build on musl: frames from the SX1262 stick recorded through the dongle (D-09) with the stick's payload log as truth | SPEC-003 S-003-10; U-008-3; process §6 licence boundary | `make corpus` reproduces the corpus byte-identically from a fixed seed; manifest rows with sha256 for the corpus files; the oracle's PER per cell in the sidecar |
+| R-08 | `qrf-lora`: CSS demodulator (SF 7–12, BW 125/250/500 kHz, sync 0x2B, explicit header, CRC, LDRO) and modulator | SPEC-003 S-003-1/7; SPEC-008 S-008-6 | Against the V-08 corpus: PER ≤ 10 % on 1 000 frames at SF7/500 kHz, SNR −5 dB, and at SF11/250 kHz, SNR −15 dB, with the oracle's PER on the same cells recorded beside ours; no CRC-failed frame reported `crc_ok`; the modulator's frames decode in the oracle |
+| R-03 | `qrf-mipi`: ring and ioctl bindings (`CSI_IOC_*`, `DSI_IOC_*` numbers derived from magic/number/size), de-interleave with scalar reference and NEON kernel, and a mock device that synthesises frames in the vendor layout from a seeded generator (1024 B × 128 lines per frame; consecutive 16-bit (I,Q) pairs for elements 0–3; one tone per element at a known phase; a frame counter) | SPEC-002 S-002-14…17, S-002-21; SPEC-008 S-008-5; T14 | Property test: NEON == scalar on 10⁶ random spans; the mock sustains the T14 cadence (one 131 072 B frame per 630 µs, 208 MB/s) through the consumer on the VM for 60 s without a skipped frame counter; the de-interleaved tones return the injected per-element phases within 0.1°; replay of a recorded ring is R-03b (P4) |
+| R-07 | `qrf-dsp`: polyphase channeliser (M = 128, P = 8), CFAR detector, two-element phase-difference bearing, 4 × 4 covariance + MUSIC; criterion benchmarks | SPEC-008 S-008-6; T16, T19 | Function, on the VM: bearing error on simulated plane waves ≤ 0.1° at 20 dB SNR (T16 bound 0.057°); a tone's power through the channeliser within 0.1 dB of its input. Budget, on a Pi 5 running copal (any Pi 5, no tile; the VM's cores are not a proxy for the A76, LR-007 §IV): 4 ch × 26 MSPS channeliser ≤ 0.8 core from `/proc/<pid>/stat` over 60 s, filed as an `M-nnn` record; the VM figure recorded beside it for reference only |
 | R-09 | `qrf-overlay`: static page + WebSocket; layers for scatter, bearing rays with σ wedges, 104-slot occupancy strip, frame log, health | SPEC-008 S-008-8 | With simulated feeds, all layers render at the declared rates in a browser on the VM; CPU of the server ≤ 0.1 core |
 | R-02b | `qrf-sensord` supervisor with `nusb` hot-plug and a TOML sensor declaration; conformance test harness | SPEC-009 S-009-1/2/12 | A dummy USB device (or a simulated plug-in) passes the 10-cycle unplug/replug test |
-| R-P1 | **Exit check:** end-to-end simulated run: simulated tile feed + simulated 915 MHz feed → overlay shows both layers aligned (T-10 in simulation) | SPEC-009 S-009-13 | 30-minute run, skew ≤ 100 ms, azimuth error ≤ 2° |
+| R-06 | ZeroMQ interoperability: the native `zeromq` crate against `pyzmq` (installed on the VM) and against a GNU Radio ZMQ SUB source block from the V-08 install | U-008-3 | 10 000 messages each way with each peer, none lost or reordered |
+| R-14 | Control plane before any binary can command a transmitter: in `qrf-core` the unlock-file schema (SPEC-005 regime, callsign when Part 97, maximum conducted power in dBm, antenna gain in dBi, validity dates), the Unix control-socket protocol that `qrf-tiled` and the `qrf` CLI will share, the refusal path and the transmit log, exercised against a mock transmitter | SPEC-008 S-008-9; SPEC-010 S-010-9; process §6 | Tests: a transmit command with no unlock file, with a malformed file, with an expired file, and with a request above the file's power or gain limit are each refused and logged; a valid Part 15 request reaches the mock and its log line carries time, frequency, power, element mask and profile; the socket is created mode 0660 in the configured group; the mock asserts it is never reached without a passed check. R-10 may not add a control socket to `qrf-tiled` before this passes |
+| D-10 | Release procedure: `docs/release.md` with `make release` and `make verify`: clean checkout of the tag, `cargo deny check`, `cargo audit`, `cargo build --locked --release`, a reproducible tarball (sorted names, fixed mtime), `ssh-keygen -Y sign` in the namespace copal uses, the public key in a committed `allowed_signers`, `ssh-keygen -Y verify` | SPEC-008 S-008-13; SPEC-010 S-010-11 | On a tagged commit `make release` yields an artefact that `make verify` accepts; a one-byte change to the artefact or to the signature makes `make verify` fail; the procedure exists before P-01 installs anything on the Pi |
+| R-P1 | **Exit check:** end-to-end simulated run (T-10 in simulation) with injected errors: one simulated emitter at a known true azimuth is seen by the simulated tile feed and the simulated 915 MHz feed; the 915 MHz feed declares a non-zero mounting yaw and a declination in its TOML (S-009-7) and its messages are delivered 300 ms later than the tile's | SPEC-009 S-009-7, S-009-13 | 30-minute run: skew ≤ 100 ms by `t_tai_ns`, azimuth error ≤ 2° after transforms; negative control: the same run with the transform zeroed, or with association by arrival time, fails |
 
-### P2 — Field tools with hardware in hand (ESP32 nodes, Pico HAT; buy one RTL-SDR dongle and one USB SX1262 stick)
+### P2 — Field tools (after R-P1 and the D-09 purchases: one RTL-SDR dongle, one USB SX1262 stick)
 
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
-| F-01 | Inventory: each ESP32 node's board, radio IC, firmware tag, max `tx_power`, antenna, FCC ID; the Pico HAT's model, band and IC | G07 §7 | Table in G07 §7 with every row `[S]` |
-| F-02 | Flash all nodes with one firmware tag, one preset, one channel, one `tx_power`; store `meshtastic --info` dumps | G07 §3 | Dumps under `resources/measurements/` listed in the manifest with sha256 |
 | F-03 | RTL-SDR plug-in (`rtlsdr-nusb`): occupancy of the 104 slots in 2.4 MHz slices; single-slot decode through `qrf-lora` | G04 C13; SPEC-009 S-009-3(b) | Test node on slot 20 appears in `Occupancy` within 5 s; its frames decode with CRC OK |
 | F-04 | USB SX1262 stick (or a JTAG-clear HAT) through `meshtasticd` and the GPL bridge plug-in | G04 C14; SPEC-004 S-004-10/11 | Frames from the test node appear as `LoraFrame` in the overlay |
-| F-05 | Run G07 T-1…T-4 (bandwidth, free-space law, Yagi gain, repeater budgets) with a spectrum analyser or the dongle | G07 | Four `M-nnn` records filed; residuals explained |
-| F-06 | Pico transponder firmware in Rust (`embassy-rp` + `lora-phy`): CW or continuous preamble on a chosen slot at a set power | SPEC-008 S-008-11; G05 F.05.12 | Dongle measures the emission at the set power ±1.5 dB and the set frequency ±2 kHz |
+| F-06 | Pico transponder firmware in Rust (`embassy-rp` + `lora-phy`): CW or continuous preamble on a chosen slot at a set power; may start once F-01 has confirmed the HAT's band and IC; its check needs the dongle | SPEC-008 S-008-11; G05 F.05.12 | Dongle measures the emission at the set power ±1.5 dB and the set frequency ±2 kHz |
 | F-P2 | **Exit check:** overlay shows live occupancy and decoded frames from the dongle and the stick for 1 hour without a loss event or a plug-in restart | SPEC-009 S-009-12 | Health log clean |
 
 ### P3 — Platform bring-up on copal (kit arrives; vendor date 2026-11-30)
@@ -78,6 +104,7 @@ the behaviour each entry must deliver is in the spec statement it names.
 | P-01 | copal playbook `playbooks/Engineering/quadrf.sh` installing `linux-rpi-dev`, `akms`, `openocd`, `soapy-sdr`, `zeromq`, `rust`, `cargo`, `gpsd`, `chrony`, `dtc` | SPEC-010 S-010-10 | `apk info` lists them; playbook commit recorded here |
 | P-02 | Identify copal's device manager on the Pi 5; write rules giving group `qrf` the device nodes | U-010-4, U-009-2 | `/dev/csi_stream0` is `root:qrf 0660` after module load |
 | P-03 | Build `fpga-csi`/`fpga-dsi` with akms against 6.18.52; blacklist the in-tree RP1 camera driver if it binds `csi1` | U-010-1, U-010-2 | Modules load; `dmesg` shows the probe; both device nodes exist; any patch published |
+| P-03b | Fallback if P-03 is not green within 7 days of the kit's arrival: boot the kit's vendor image and run its SoapyRemote server (SPEC-002 S-002-4); on copal or the VM, `qrf-tiled` behind the `soapysdr` crate (S-008-10) or a `soapy-remote` plug-in consumes CS8 over Ethernet at a host rate the link carries (T24: two channels at 26 MSPS or four at 13 MSPS; four at 26 MSPS never fit); bring-up, R-04's observation and a CW bearing check proceed while the module port continues | U-010-1, U-010-2; SPEC-008 S-008-10; T24 | `Health` and `Spectrum` from the tile in the overlay on copal; the sustained rate and the loss count over 60 s in an `M-nnn` record |
 | P-04 | OpenRC `qrf-load` (unload, OpenOCD SVF from the copied bitstream, modprobe, vendor `quadrf-jtag --init` as a child) | SPEC-010 S-010-5; SPEC-002 S-002-19 | `csi_stats.frame_count` increases at rest with `interleave=1`; `rc-service qrf-load status` reports it |
 | P-05 | Lossless capture: 60 s at 4 × 26 MSPS; copy-workqueue CPU measured | G05 criterion 5 precondition; U-002-4 | Zero loss events; CPU shares recorded in an `M-nnn` record |
 | P-06 | Tuning options (governor, IRQ affinity, isolcpus/nohz_full) each measured | SPEC-010 S-010-6 | Each option's loss events and 99.99-percentile latency recorded; adopted only if better |
@@ -91,7 +118,8 @@ the behaviour each entry must deliver is in the spec statement it names.
 | --- | --- | --- | --- |
 | R-04 | Observe the vendor CLI's register writes (`strace` of the JTAG ioctls) for init, tune, gain, mask, phases; write the sequences into SPEC-001 as `[M]`; implement native tuning in `qrf-jtag` | U-008-4; SPEC-008 S-008-15 | Native and vendor paths produce identical register sequences for 10 tune/gain/mask cases |
 | R-05 | Parity: ring path vs vendor SoapySDR module on one CW tone | SPEC-008 S-008-10; U-002-5, U-010-5 | CS8 bit-exact, or power within 0.1 dB and phase within 1° |
-| R-10 | `qrf-tiled`: ring consumer, timestamps, de-interleave, shared-memory ring, ZeroMQ, control socket, loss accounting | SPEC-008 S-008-2/3/4 | 60 s lossless at 4 × 26 MSPS with `qrf-dspd` consuming; consumer wake-to-consume 99.99 % < 2 ms |
+| R-03b | Record 10 s of the real ring during P-05's capture to `resources/measurements/` (manifest row with sha256); the R-03 mock replays it | U-008-1, U-002-3 | Replay at the T14 cadence without loss on the Pi and on the VM; ring and span sizes recorded; U-008-1 and U-002-3 closed |
+| R-10 | `qrf-tiled`: ring consumer, timestamps, de-interleave, shared-memory ring, ZeroMQ, the R-14 control socket, loss accounting | SPEC-008 S-008-2/3/4 | 60 s lossless at 4 × 26 MSPS with `qrf-dspd` consuming; consumer wake-to-consume 99.99 % < 2 ms |
 | R-11 | 4.9–6.0 GHz layer: own swept-LO scatter, or the vendor `/ws` stream consumed by a plug-in | U-008-2; SPEC-008 S-008-8 | A 5.8 GHz CW source appears in the overlay at the right azimuth ±5° |
 | H-02 | Measure and identify the antenna-module connector; pigtail loss at 5500 MHz | U-001-1; G05 criterion 1 | ≤ 1 dB loss, `[M]` record; mating part number in SPEC-007 S-007-12 |
 | H-03 | Check whether the 40 MHz reference can be exported | U-001-2 | `[M]` record; SPEC-007 S-007-9 updated |
@@ -117,11 +145,11 @@ the behaviour each entry must deliver is in the spec statement it names.
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
 | F-08 | Phase 1: SX1262 node with a 10–12 dBi vertical Yagi, conducted power 30 − (G − 6) dBm, 500 kHz preset; T-3 and T-4 | G06 §7 Phase 1; SPEC-005 S-005-5 | Records filed; measured RSSI within tolerance for ≥ 2 summits |
-| V-07 | Part 97 profile if licensed operation is chosen: licence, callsign in the unlock file, exposure evaluation on file | SPEC-005 S-005-14…18, S-005-21; SPEC-008 S-008-9 | Unlock file present and logged; evaluation document under `investigations/records/` |
+| V-07b | Part 97 profile, only if V-07a decided yes: unlock file naming the callsign, exposure evaluation on file | SPEC-005 S-005-14…18, S-005-21; SPEC-008 S-008-9 | Unlock file present and logged; evaluation document under `investigations/records/` |
 | F-09 | Phase 3: tile-to-tile 5.8 GHz LoRa link at 1 km (needs a second tile) with 500 kHz preset at 1 W aggregate, fixed point-to-point | G06 §7 Phase 3; G07 T-9 | PER ≤ 1 %; SNR within ±3 dB of budget |
 | S-P6 | **Exit check:** G06 gate signed | G06 | Gate record PASS |
 
-### P7 — Transmit beamforming at 915 MHz (Part 97 only; after G05 PASS and V-07)
+### P7 — Transmit beamforming at 915 MHz (Part 97 only; after G05 PASS, V-07a yes and V-07b)
 
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |

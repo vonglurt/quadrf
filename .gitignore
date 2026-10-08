@@ -1,10 +1,14 @@
 # Raw downloads, cloned reference repos, datasheets: never committed.
-# Re-create with scripts/fetch-resources.sh; inventory in docs/resources-manifest.md
+# Re-create with scripts/fetch-resources.sh and scripts/import-shared.sh;
+# inventory in docs/resources-manifest.md
 resources/
 
 # macOS AppleDouble metadata written through the UTM share
 ._*
 .DS_Store
+
+# Cargo build output (Cargo.lock is tracked)
+target/
 
 # Build / scratch
 build/

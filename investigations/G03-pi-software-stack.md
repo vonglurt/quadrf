@@ -77,3 +77,16 @@ whose reset line is not GPIO 18 or is jumper-selectable, and keep UART0 free
 ## 9. Carry-forward
 
 - F.03.2, F.03.3, F.03.4, F.03.6, F.03.7, F.03.8, process graphs A/B/C.
+
+## 10. Errata and addenda (2026-10-08, second pass)
+
+The gate decision is unchanged. The user's extension (Rust, copal, USB and
+plug-in sensors, a parallel feed) moved the "what we write" answer into
+implementation specs; this gate's process graphs A/B/C stand as the
+functional description.
+
+- F.03.9 Of the fourteen SX126x board templates shipped with the Linux daemon, the MeshAdv-Mini 900M22S (CS 8 / IRQ 16 / Busy 20 / Reset 24 / RXen 12) uses none of the tile's JTAG pins; PiTastic/ZebraHat and RAK6421/Station G3 sets are clear if GPIO 22 is unused; every template with Reset on GPIO 18 (Waveshare SX126x HAT, MeshAdv 900M30S, NebraHat, PiMesh, Starter edition) collides. This answers the first-pass recommendation. `[S]`+`[D]` (SPEC-004 S-004-9/10)
+- F.03.10 USB-attached SX1262 radios (meshstick, meshtoad-E22, uMesh 30 dBm, RAK19714, frametastic) use a USB SPI/GPIO bridge and no header pin; they are the simplest 915 MHz participation path beside the tile and fit the plug-in model. `[S]` (SPEC-004 S-004-11)
+- F.03.11 Everything the vendor stack needs below the application layer exists in Alpine 3.24 for the Pi 5 (`linux-rpi` 6.18.52 with headers, `akms`, `openocd` 0.12, `soapy-sdr` 0.8.1, `rtl-sdr`, `hackrf`, `gnuradio` 3.10.12, `zeromq`, `rust`/`cargo`, `gpsd`, `chrony`); the vendor's Debian/systemd/DKMS/Flask layer is replaced, not ported. `[S]` (vendor/alpine/ATTRIBUTION.md; SPEC-010)
+- F.03.12 The Rust ecosystem on 2026-10-08 provides pure-Rust USB (`nusb` 0.2.7), an RTL-SDR driver on it, a native ZeroMQ, protobuf, FFT and portable-SIMD crates, an SX1262 driver and an Embassy LoRa PHY for the Pico; it provides no production-grade SDR framework (FutureSDR requires nightly; seify's native drivers are experimental). The architecture therefore uses small crates and our own kernels. `[S]` (vendor/rust-crates/ATTRIBUTION.md; LR-003)
+- F.03.13 What we write is now specified: SPEC-008 (processes `qrf-tiled`, `qrf-dspd`, `qrf-sensord`, `qrf-overlay`; workspace crates), SPEC-009 (plug-ins and bus), SPEC-010 (platform). Process graph B.iii's "≈ 3 blocks of new code" becomes the channeliser, detector/bearing and CSS demodulator of `qrf-dsp`. `[D]`

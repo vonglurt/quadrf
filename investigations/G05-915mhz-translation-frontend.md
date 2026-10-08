@@ -91,3 +91,24 @@ test; it is the cheapest unambiguous aperture.
 ## 9. Carry-forward (provisional, confirmed at bench)
 
 - F.05.1–F.05.12; the pass/fail of criteria (1)–(5).
+
+## 10. Addenda (2026-10-08, second pass; gate remains OPEN)
+
+Desk findings from the MAX2851 datasheet (LR-006), the bearing-precision
+bound (T16) and the plug-in architecture (LR-003/LR-005):
+
+- F.05.14 The tile's receiver synthesiser has −42 dBc fractional spurs at 0–19 MHz offsets, above the 8-bit single-tone SFDR (≈ 49.9 dB); through the FTFE a −30 dBm in-band emitter yields replicas at −72 dBm (58 dB above a −130 dBm LoRa signal) at deterministic offsets sharing the parent's bearing. Mitigations: choose the translator LO so measured spur offsets fall outside the 104 slots; flag detections that match a strong emitter's bearing and a measured offset as replicas; lower the tile RF gain when a strong emitter is present (P1dB −34 → −18 dBm at max − 16 dB). `[S]`+`[D]` (SPEC-001 S-001-28/30/32; analysis T17; LR-006 §C)
+- F.05.15 The tile LO's integrated phase noise is 1.44° rms and is common-mode across the four channels of one IC; it does not enter phase-difference bearings. `[S]`+`[D]` (S-001-30; T17)
+- F.05.16 The thermal-noise bound on a two-element phase-difference bearing at half-wave pitch is 0.57° at 0 dB SNR with 1024 samples and 0.057° at 20 dB; criterion (4)'s 5° rms is therefore a calibration and multipath budget, not a sensitivity one. `[D]` (analysis T16)
+- F.05.17 The FTFE cascade from the script: 1.19 dB NF without a pre-filter, 3.19 dB with a 2 dB SAW ahead of the LNA, reproducing F.05.4 and F.05.5 (which used ≈ 1.3 / ≈ 3 dB). `[D]` (analysis T18)
+- F.05.18 The tile IC's gain flatness is ≤ 4.2 dB peak-to-peak over the whole 4.9–5.9 GHz span, which bounds U-001-3's flatness term over the 26 MHz window; the NF term stays a bench item. `[S]`+`[D]` (S-001-31)
+- F.05.19 Baseband placement: with the LO at 5500 MHz the slot at DC (slot 52, 914.875 MHz) sits in the receiver's high-pass region unless the 0.1 kHz corner is selected; the capture daemon selects it or the slot is excluded from the map. `[S]`+`[D]` (S-001-29)
+- F.05.20 The FTFE-fed tile is one sensor plug-in among several; its `Bearing` messages are computed with the true 915 MHz wavelength and the surveyed external aperture. `[D]` (SPEC-009 S-009-8)
+
+Bench criterion added to §8: (6) LO-spur replicas: with a −30 dBm CW at the
+915 MHz input, record every product within 5487–5513 MHz above −100 dBm with
+its offset and level, `[M]`; the replica-flagging rule (F.05.14) uses this
+table.
+
+Open conjecture added: U-001-6 (FPGA part) is read at first power-up (backlog
+H-01).

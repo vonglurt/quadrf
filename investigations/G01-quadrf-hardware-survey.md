@@ -83,3 +83,19 @@ path to G04/G06.
 ## 9. Carry-forward
 
 - F.01.1, F.01.3, F.01.4, F.01.5, F.01.6, F.01.7, F.01.8, F.01.9, F.01.10, F.01.11, F.01.12.
+
+## 10. Errata and addenda (2026-10-08, second pass)
+
+The gate decision is unchanged. New primary sources (the MAX2851 datasheet
+supplied by the user, the RP1 datasheet, the vendor driver sources and
+licence files) add the following; see LR-006 and SPEC-001 revision 2.
+
+- F.01.13 The receiver IC's RF input range is 4.9–5.9 GHz, its LO is coherent among its channels, its DSB noise figure is 4.5 dB at maximum gain, its synthesiser has −35 dBc integrated phase noise and −42 dBc spurs at 0–19 MHz offsets, and its baseband high-pass corner is selectable among 600 kHz, 10 kHz and 0.1 kHz. F.01.1–F.01.3 therefore rest on the datasheet, not on product pages. `[S]` (SPEC-001 S-001-26…30)
+- F.01.14 The vendor's 1.2 dB system noise figure requires the external LNA to have NF ≤ 1 dB and gain ≥ 13.5 dB with ≤ 0.5 dB of loss ahead of it; the −42 dBc spurs exceed the 8-bit SFDR and will produce deterministic replicas of strong in-band emitters. `[D]` (analysis T17, T18; carried to G05 F.05.14)
+- F.01.15 The CSI-2 link carries 4 lanes at 700 Mbit/s (2.8 Gbit/s raw); four interleaved channels at 26 MSPS use 59 % of it and arrive as 131 072-byte frames every 630 µs; the driver buffers 16 frames (10 ms). The RP1 provides 8 Gbit/s across its two MIPI PHYs over a PCIe 2.0 x4 link. `[S]`+`[D]` (SPEC-001 S-001-34; analysis T14)
+- F.01.16 The FPGA part is LFE5U-25F-6BG256C in the schematic but the OpenOCD tap is named lfe5u45f; which is fitted is unknown until the IDCODE is read. `[C]` (SPEC-001 S-001-35; U-001-6; backlog H-01)
+- F.01.17 Erratum to U-001-2: the "SiT8008 MEMS" identification of the 40 MHz reference came from the vendor BOM page; the schematic text contains no such designator. The reference's identity is `[C]` until the schematic page is read visually; the 40 MHz value itself is datasheet-backed. `[C]`+`[S]` (schematics.txt grep; SPEC-001 S-001-26)
+- F.01.18 Licences: kernel modules GPL-2.0; SoapySDR module, CLI, GUI and demos GPL-2.0/3.0; antenna files CC-BY-SA-4.0 with a patent covenant; bitstream proprietary but redistributable. `[S]` (vendor/scalerf/ATTRIBUTION.md)
+
+Carry-forward additions: F.01.13, F.01.14, F.01.15 to G05; F.01.18 to the
+design track (SPEC-008, SPEC-010).

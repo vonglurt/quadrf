@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Reviewed |
-| Revision | 1 |
+| Status | Reviewed (rev 1); rev 2 additions S-001-26…36 await a second read |
+| Revision | 2 |
 | Date | 2026-10-08 |
 | Subject | One ScaleRF QuadRF RF tile (RF board + 4-element antenna module + ECP5 FPGA) as seen from its antenna ports, its Pi 5 interfaces, and its control registers |
 | Primary sources | `resources/scalerf/QuadRF_schematics.pdf`, `resources/scalerf/docs.html`, `resources/repos/quadrf-open-space-sdr/` (README.md, sources/fpga/jtag_src/jtag.c, sources/soapy/MipiDevice.cpp, sources/fpga/interface/rpi5_ecp5_gpio.cfg, sources/demos/csi_sweep.c), `resources/scalerf/cal_antennas.html` |
@@ -62,6 +62,23 @@ stated.
 - S-001-24. Tiles daisy-chain over FFC: transmit samples pass down the chain with per-tile integer/fractional delay; receive sums cascade upward; each tile recovers the upstream clock with a digital PLL. `[S]` (docs.html; chained.svg)
 - S-001-25. The tile is powered at 5 V from the Pi supply (5–17 V accepted in array builds); tile plus antenna ≈ 35 g; kit enclosure ≈ 15 × 11 × 4 cm. `[S]` (docs.html; README.md)
 
+### Converter IC facts from the MAX2851 datasheet (revision 2)
+
+- S-001-26. The receiver IC's RF input range is 4.9–5.9 GHz, its down-conversion LO is coherent among its receive channels, it takes a 40 MHz reference, and its fractional-N synthesiser steps by 76.294 Hz. `[S]` (resources/datasheets/MAX2851.pdf pp. 1, 3, 7; vendor/summary/analog-devices-max2851.md)
+- S-001-27. The receiver IC's DSB noise figure is 4.5 dB at maximum RF gain and 15 dB at maximum − 16 dB; its total voltage gain spans ≈ −2 to 68 dB in RF steps of 8/16/32/40 dB plus 30 dB of baseband gain in 2 dB steps; gain settles within 400 ns (RF) and 200 ns (baseband). `[S]` (MAX2851.pdf pp. 3–4)
+- S-001-28. Linearity at the IC input: 1 dB compression −34 dBm at maximum gain rising to −1 dBm at maximum − 32 dB; out-of-band IIP3 −13 to +11 dBm over the same settings; 1 dB desensitisation by an alternate-channel blocker at −24 dBm. `[S]` (MAX2851.pdf p. 4)
+- S-001-29. Baseband filtering in the IC: low-pass −3 dB corner selectable 9.5 MHz or 19 MHz with stop-band rejection 74 dB at 30 MHz / 69 dB at 60 MHz; high-pass corner selectable 600 kHz, 10 kHz or 0.1 kHz; I/Q gain and phase imbalance 0.1 dB and 0.2°; sideband suppression 40 dB. `[S]` (MAX2851.pdf p. 5)
+- S-001-30. Synthesiser quality: integrated phase noise −35 dBc (1 kHz–10 MHz, 200 kHz loop bandwidth); spur level −42 dBc for 0–19 MHz offsets and −66 dBc at 40 MHz; receiver LO leakage emission −75 dBm/MHz. `[S]` (MAX2851.pdf pp. 5, 7)
+- S-001-31. The IC's gain varies ≤ 4.2 dB peak-to-peak (1.8 dB typical) over 4.9–5.9 GHz at one temperature, which bounds the flatness term of U-001-3: a 26 MHz window is 2.6 % of that span. `[S]`+`[D]` (MAX2851.pdf p. 3)
+- S-001-32. Consequences: −35 dBc integrated phase noise is 1.44° rms of LO phase; the −42 dBc spurs exceed the 8-bit single-tone SFDR (≈ 49.9 dB), so a strong in-band emitter produces replicas 42 dB down at deterministic offsets; the vendor's 1.2 dB system NF is consistent only with an external LNA of NF ≤ 1 dB, gain ≥ 13.5 dB and ≤ 0.5 dB of loss ahead of it. `[D]` (analysis T17, T18)
+
+### Receive bandwidth, data path and platform (revision 2)
+
+- S-001-33. The analog receive bandwidth is programmed as 240/k MHz with integer k from 5 to 63, i.e. 3.81–48 MHz; the transmit bandwidth is 20 or 40 MHz. `[S]` (jtag.c lines 231–240, 671–675; MipiDevice.cpp lines 186–187)
+- S-001-34. The CSI-2 link runs 4 data lanes at 700 Mbit/s (a 350 MHz DDR source) carrying RAW8 frames of 1024 bytes × 128 lines, 2.8 Gbit/s raw per direction; the RP1 provides 8 Gbit/s across its two 4-lane MIPI PHYs and reaches the BCM2712 over PCIe 2.0 x4. Four interleaved channels at 26 MSPS use 59 % of the CSI raw rate and arrive as one 131 072-byte frame every 630 µs; the driver's 16 DMA buffers hold 10 ms. `[S]`+`[D]` (fpga-csi.dts; resources/datasheets/RP1-peripherals.pdf ch. 1; fpga-csi.c line 204; analysis T14)
+- S-001-35. The FPGA part number is LFE5U-25F-6BG256C in the schematic, while the vendor's OpenOCD board file and JTAG tap are named lfe5u45f; which device is fitted is unknown until the IDCODE is read. `[S]`+`[C]` (schematics.txt; sources/fpga/quadrf-load; U-001-6)
+- S-001-36. Licences: the kernel modules are GPL-2.0; the SoapySDR module, CLI, GUI and demos are GPL-2.0/GPL-3.0; antenna design files are CC-BY-SA-4.0 with a patent covenant; the FPGA bitstream is proprietary but redistributable; the RF core is all rights reserved. `[S]` (debian/copyright; updates.html FAQ; licenses/LICENSE.md; vendor/scalerf/ATTRIBUTION.md)
+
 ## Interfaces we depend on
 
 - Element RF port: the board-to-board connector between RF board and antenna module (footprint `BWCD-L5.0W2.0H2.5`). Impedance and mating part are not stated; see U-001-1.
@@ -73,13 +90,15 @@ stated.
 | Id | Unknown | Closing gate |
 | --- | --- | --- |
 | U-001-1 | Element-port connector type, impedance, insertion loss, and whether a pigtail can replace the antenna module | G05 bench |
-| U-001-2 | Whether the 40 MHz reference (SiT8008 MEMS) is accessible for export to an external LO | G05 bench |
+| U-001-2 | Whether the 40 MHz reference is accessible for export to an external LO; its identity (a MEMS SiT8008 per the vendor BOM page, not seen in the schematic text; G01 F.01.17) | G05 bench |
 | U-001-3 | Actual receive noise figure and gain flatness across 5490–5530 MHz (the 915 MHz translation window) | G05 bench |
 | U-001-4 | Element pattern and gain of the circular patch at 5.5 and 5.8 GHz (OpenEMS model exists; not simulated by us) | G05 or G06 desk |
 | U-001-5 | Behaviour of the factory bitstream's auto-steer and RF-vision maths when fed a translated band | G05 bench |
+| U-001-6 | Which ECP5 device is fitted (LFE5U-25F per schematic vs lfe5u45f per OpenOCD tap name); read IDCODE | bench, first power-up |
 
 ## Revision history
 
 | Rev | Date | Change |
 | --- | --- | --- |
 | 1 | 2026-10-08 | First reviewed version |
+| 2 | 2026-10-08 | S-001-26…36 from the MAX2851 datasheet (supplied by the user), the vendor driver sources, the RP1 datasheet and the licence files; U-001-3 bounded by S-001-31; U-001-6 added |

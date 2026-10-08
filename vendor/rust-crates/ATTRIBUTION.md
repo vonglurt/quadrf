@@ -1,0 +1,35 @@
+# Rust crates we intend to depend on
+
+Dependencies are fetched by Cargo from crates.io and pinned in `Cargo.lock`;
+nothing is copied here. `cargo deny` will enforce the licence allow-list
+(MIT, Apache-2.0, BSD-2/3-Clause, ISC, Zlib, Unicode-3.0, MPL-2.0 for
+unmodified use) and reject GPL crates in MIT binaries.
+
+| Crate | Version seen 2026-10-08 (crates.io API) | Licence | Role |
+| --- | --- | --- | --- |
+| `nusb` | 0.2.7 | MIT OR Apache-2.0 | pure-Rust USB access for SDR dongles and LoRa sticks |
+| `rtlsdr-nusb` | 0.3.0 | per crate (verify) | Rust-native RTL-SDR driver |
+| `seify` | 0.26.0 | Apache-2.0 | SDR hardware abstraction (SoapySDR backend optional) |
+| `soapysdr` / `soapysdr-sys` | 0.5.1 / 0.8.1 | MIT OR Apache-2.0 (bindings) to libSoapySDR (Boost-1.0) | bridge to the vendor `mipi` module for parity tests |
+| `futuresdr` | 0.9.0 | Apache-2.0 | async flowgraph runtime (evaluation only; nightly toolchain) |
+| `rustradio` | 0.18.8 | MIT | DSP block library (evaluation) |
+| `rustfft` / `realfft` | 6.4.1 / 3.5.0 | MIT OR Apache-2.0 | FFTs for the channeliser and LoRa dechirp |
+| `num-complex`, `ndarray` | 0.4.6 / 0.17.2 | MIT OR Apache-2.0 | numerics |
+| `wide`, `pulp` | 1.7.1 / 0.22.3 | Zlib OR Apache-2.0 OR MIT; MIT | portable SIMD (NEON) |
+| `tokio`, `axum`, `tokio-tungstenite` | 1.53.2 / 0.8.9 / 0.30.0 | MIT | async runtime, HTTP, WebSocket for the overlay |
+| `zeromq` | 0.6.0 | MIT | native-Rust ZeroMQ for the feed bus (vendor tools speak ZeroMQ) |
+| `prost` | 0.14.4 | Apache-2.0 | protobuf schema for bus messages |
+| `serde` | 1.0.229 | MIT OR Apache-2.0 | configuration files |
+| `memmap2`, `nix`, `libc` | 0.9.11 / 0.31.3 / 0.2.190 | MIT OR Apache-2.0 | ring mmap and ioctls on `/dev/csi_stream0` |
+| `gpiocdev`, `spidev`, `linux-embedded-hal` | 0.8.0 / 0.7.1 / 0.5.0 | MIT OR Apache-2.0 | GPIO and SPI for a HAT radio |
+| `sx1262` | 0.3.0 | per crate (verify) | SX1262 driver for a host-attached HAT or stick |
+| `lora-phy`, `embassy-rp` | 3.0.1 / 0.10.0 | MIT OR Apache-2.0 | Pico (RP2040) field-node firmware |
+| `tokio-serial`, `nmea` | 5.5.0 / 0.8.0 | MIT; Apache-2.0 | GNSS time and position |
+| `clap`, `tracing`, `anyhow`, `thiserror` | 4.6.7 / 0.1.44 / 1.0.104 / 2.0.21 | MIT OR Apache-2.0 | CLI, logs, errors |
+| `criterion` | 0.8.2 | MIT OR Apache-2.0 | benchmarks |
+| `cargo-deny`, `cargo-audit`, `cargo-vet` | 0.20.2 / 0.22.2 / 0.10.2 | MIT OR Apache-2.0 | supply-chain checks |
+| `meshtastic` | 0.1.9 | **GPL-3.0** | Meshtastic client; usable only in a separate GPL-licensed plugin process |
+| `librtlsdr-rs` | — | **GPL-2.0** | not used |
+
+Licence columns marked "verify" are confirmed by `cargo deny` at first build
+(backlog R-02); until then they are `[C]`.

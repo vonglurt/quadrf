@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Reviewed |
-| Revision | 1 |
+| Status | Reviewed (rev 1); rev 2 additions S-005-20…22 await a second read |
+| Revision | 2 |
 | Date | 2026-10-08 |
 | Subject | The constraints a transmitter in this project must satisfy, as behaviour goals, under 47 CFR Part 15 (unlicensed) and Part 97 (amateur) |
 | Primary sources | `resources/regulatory/cfr-47-15.247.html`, `-15.249`, `-15.23`, `-15.203`, `-15.205`, `-15.209`, `-97.3`, `-97.113`, `-97.119`, `-97.303`, `-97.311`, `-97.313` (LII mirror, retrieved 2026-10-08) |
@@ -41,7 +41,13 @@ checked against the cited paragraph. It is not legal advice.
 
 ## RF exposure (both services)
 
-- S-005-19. General-population MPE: 300–1500 MHz, f/1500 mW/cm² (0.61 mW/cm² at 915 MHz); 1500–100 000 MHz, 1.0 mW/cm². Far-field compliance distances: 36 dBm EIRP at 915 MHz, 0.23 m; 52 dBm, 1.44 m; 64.6 dBm, 6.1 m; 54.6 dBm at 5.8 GHz, 1.5 m. `[S]` (47 CFR 1.1310 Table 1, not retrieved into resources/, verify) + `[D]` (analysis T11)
+- S-005-19. General-population MPE: 300–1500 MHz, f/1500 mW/cm² (0.61 mW/cm² at 915 MHz); 1500–100 000 MHz, 1.0 mW/cm². Far-field compliance distances: 36 dBm EIRP at 915 MHz, 0.23 m; 52 dBm, 1.44 m; 64.6 dBm, 6.1 m; 54.6 dBm at 5.8 GHz, 1.5 m. `[S]` (47 CFR 1.1310(e)(1) Table 1; resources/regulatory/cfr-47-1.1310.html; vendor/cfr47/47-CFR-1.1310.txt) + `[D]` (analysis T11)
+
+## Revision 2 additions
+
+- S-005-20. The general-population MPE of §1.1310(e)(1) Table 1 is f/1500 mW/cm² for 300–1500 MHz and 1.0 mW/cm² for 1500–100 000 MHz, averaged over 30 minutes; the occupational limits are f/300 and 5 mW/cm², averaged over 6 minutes; the MPE route may be used in place of SAR for 300 kHz–6 GHz except for portable devices. `[S]` (§1.1310(d)(2), (e)(1); vendor/cfr47/47-CFR-1.1310.txt)
+- S-005-21. An amateur licensee must ensure compliance with the exposure rules of §§1.1307(b), 2.1091 and 2.1093 before transmitting from any place where the §1.1310 limits could be exceeded, may evaluate household members against the occupational limits only with training, and must act to prevent exposure where the evaluation shows an exceedance. `[S]` (§97.13(c)(1)–(2); vendor/cfr47/47-CFR-97.13.txt)
+- S-005-22. A reported FCC grant for a Seeed Wio-SX1262 module (FCC ID Z4T-WIO-SX1262, 2024-10-16) lists equipment class DSS and frequency rows 902.3–914.9 MHz, which would exclude the Meshtastic US slots above 915 MHz from that module's authorisation; the record has not been read at the FCC database. `[C]` (vendor/summary/fcc-grants.md; closes at backlog V-04)
 
 ## Known unknowns
 
@@ -49,6 +55,7 @@ checked against the cited paragraph. It is not legal advice.
 | --- | --- | --- |
 | U-005-1 | Under which §15.247 paragraph the grantee of each Meshtastic module in hand obtained certification, and what host obligations the grant imposes (e.g. hopping) | G02 (read the FCC grant for each module) |
 | U-005-2 | Current ecfr.gov text vs LII mirror | G02 (verify before any transmission campaign) |
+| U-005-4 | Whether each module's grant covers the full 902–928 MHz band or only a sub-range, and under which class (DSS/DTS) | backlog V-04 |
 | U-005-3 | ISED RSS-247 equivalence for paths facing British Columbia | G06 if a BC-facing path is planned |
 
 ## Revision history
@@ -56,3 +63,4 @@ checked against the cited paragraph. It is not legal advice.
 | Rev | Date | Change |
 | --- | --- | --- |
 | 1 | 2026-10-08 | First reviewed version |
+| 2 | 2026-10-08 | §1.1310 and §97.13 retrieved; S-005-19 retagged `[S]`; S-005-20…22 added; U-005-4 added |

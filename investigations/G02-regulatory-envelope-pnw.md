@@ -94,3 +94,11 @@ read the FCC grant of each module in hand (F.02.5) and re-check ecfr.gov.
 ## 9. Carry-forward
 
 - F.02.1, F.02.3, F.02.4, F.02.6, F.02.7, F.02.8, F.02.9, F.02.10, F.02.11, F.02.12, F.02.13.
+
+## 10. Errata and addenda (2026-10-08, second pass)
+
+The gate decision is unchanged.
+
+- F.02.14 §1.1310 and §97.13 were retrieved (LII mirror; public-domain text in `vendor/cfr47/`). The MPE figures used in F.02.13 are now sourced: general population f/1500 mW/cm² (300–1500 MHz) and 1.0 mW/cm² (1500–100 000 MHz), 30-minute average; an amateur licensee must evaluate exposure under §1.1307(b) before transmitting where the limits could be exceeded. `[S]` (SPEC-005 S-005-19…21)
+- F.02.15 A reported FCC grant for a Seeed Wio-SX1262 module lists class DSS and frequency rows 902.3–914.9 MHz, which would place Meshtastic slots above 915 MHz outside that module's authorisation. The record is from a third-party mirror via a search summary and is unverified; it sharpens F.02.5 and U-005-1 but closes nothing. `[C]` (SPEC-005 S-005-22; U-005-4; backlog V-04)
+- F.02.16 Erratum to the first-pass gate record: "47 CFR 1.1310 and 97.13 to be retrieved into resources/" is done; U-005-2 (ecfr.gov re-check) remains open until a transmission campaign is planned. `[S]`

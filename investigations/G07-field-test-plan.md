@@ -59,3 +59,9 @@ listed in the manifest with checksums).
 - ESP32 LoRa nodes: record board, radio IC (SX1262 vs SX1276), firmware version, max `tx_power`, antenna. `[C]` until recorded.
 - Pico LoRa HAT: record model and radio IC; a 22 dBm SX1262 HAT is "slightly more powerful" than 20 dBm ESP32 boards; a 30 dBm (E22-900M30S class) module requires the §15.247(b)(4) back-off with any antenna above 6 dBi. `[C]` until recorded.
 - Flashing many nodes: use one firmware tag, one preset, one channel, one `tx_power`; record all in the measurement header.
+
+## 8. Addenda (2026-10-08, second pass; plan remains DRAFT)
+
+- T-10 (draft). Claim: the parallel feed is aligned (SPEC-009 S-009-13). Prediction: tile (5 GHz layer) and a 915 MHz coherent receiver draw one surveyed emitter within ≤ 100 ms and ≤ 2° after mounting transforms. Setup: one node radiating LoRa at 915 MHz and a 5.8 GHz CW source (or second tile) co-located at a surveyed point 20 m from the sensors; `qrf-overlay` log. Pass: 30-minute run within tolerance.
+- Hardware note: the Pico LoRa HAT is probably a Waveshare "Pico-LoRa-SX1262" (SPI, SX1262; an 868M variant is confirmed at retail; a 915M variant and its maximum power are unverified). The field-node firmware for it is Rust (`embassy-rp` + `lora-phy`, SPEC-008 S-008-11); record the model, band and FCC ID when the board is in hand (backlog F-01). `[C]`
+- T-1…T-4 can be run with an RTL-SDR dongle as the receiver (C13) if no spectrum analyser is available; absolute power then needs a calibrated attenuator and a reference level, and the tolerance in T-1 widens to ±3 dB. `[D]`

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Reproducible numerical basis for the quadrf investigation documents.
 
-Every number quoted in investigations/ and specs/ that is marked [D] (derived)
-is produced here. Run:  python3 analysis/linkbudget.py
-No third-party dependencies.
+Every number quoted in investigations/, specs/, lab/ and backlog.md that is
+marked [D] (derived) is produced here. Run:  python3 analysis/linkbudget.py
+No third-party dependencies. Tables are numbered T1…T19 and cited by number.
+
+Inputs marked [S] in comments are sourced values (vendor documents, datasheets
+in resources/datasheets/, CFR text); inputs marked [C] are placeholders that a
+datasheet or a measurement will replace.
 """
 import math
 
@@ -65,6 +69,13 @@ def grating_steer_limit_deg(d_over_lambda):
 def unambiguous_doa_deg(d_over_lambda):
     s = 1/(2*d_over_lambda)
     return 90.0 if s >= 1 else math.degrees(math.asin(s))
+
+def uca_radius_m(s, lam_m, n):
+    """KrakenSDR-style uniform circular array: inter-element spacing s*lambda."""
+    return s*lam_m / math.sqrt(2*(1 - math.cos(2*math.pi/n)))
+
+def db(x): return 10*math.log10(x)
+def lin(x_db): return 10**(x_db/10)
 
 def line(): print("-"*78)
 
@@ -131,7 +142,7 @@ if __name__ == "__main__":
         tau = ap_m/C
         print(f"  aperture {ap_m:3.1f} m  tau={tau*1e9:5.2f} ns  1/BW={1/bw*1e6:8.2f} us  ratio={tau*bw:9.2e}")
     line()
-    print("T11 RF exposure (47 CFR 1.1310 general population MPE): 902-928 -> f/1500 = 0.61 mW/cm2; 5.8 GHz -> 1.0 mW/cm2")
+    print("T11 RF exposure (47 CFR 1.1310 Table 1, general population MPE): 300-1500 MHz -> f/1500 = 0.61 mW/cm2 at 915; 1500-100000 MHz -> 1.0 mW/cm2")
     for name,eirp_dbm,s in (("36 dBm @915",36,0.61e-3),("52 dBm @915",52,0.61e-3),("64.6 dBm @915",64.6,0.61e-3),("42 dBm @5800",42,1.0e-3),("54.6 dBm @5800",54.6,1.0e-3)):
         print(f"  {name:16} compliance distance (far-field formula) = {mpe_distance_m(10**(eirp_dbm/10)/1000, s):5.2f} m")
     line()
@@ -144,3 +155,75 @@ if __name__ == "__main__":
     for k in (0.5,1,2,4):
         q = (1/math.sqrt(12))**2; n=k**2
         print(f"  k={k:3}  10log10(1+q/n) = {10*math.log10(1+q/n):5.2f} dB")
+    line()
+    # ------------------------------------------------------------------
+    # Second-pass tables (2026-10-08): data paths, 915 MHz apertures, LO
+    # quality, cascade NF from the MAX2851 datasheet, CPU budget, USB power.
+    # ------------------------------------------------------------------
+    print("T14 Data-path budgets (bit/s), Pi 5 + QuadRF tile")
+    lane_mbps = 700.0                     # [S] fpga-csi.dts: 350 MHz DDR -> 700 Mbps per lane
+    csi_gbps = 4*lane_mbps/1e3           # 4 lanes
+    print(f"  CSI-2 4 lanes x {lane_mbps:.0f} Mbit/s = {csi_gbps:.2f} Gbit/s raw; DSI same -> {2*csi_gbps:.1f} Gbit/s aggregate (vendor: 5.6)")
+    print(f"  RP1 MIPI aggregate (datasheet): 8 Gbit/s; PCIe 2.0 x4 to BCM2712: 4 x 5 GT/s x 8/10 = {4*5*0.8:.0f} Gbit/s; USB 3.0 per port 5 GT/s x 8/10 = 4 Gbit/s")
+    for label,ch,msps in (("1 ch, 40 MSPS",1,40),("4 ch interleaved, 26 MSPS",4,26),("4 ch interleaved, 40 MSPS",4,40),("PhaseGaze 1 ch, 38 MSPS",1,38)):
+        gbps = ch*msps*1e6*16/1e9
+        print(f"  {label:28} CS8: {gbps:5.2f} Gbit/s = {gbps/8*1000:6.0f} MB/s  ({100*gbps/csi_gbps:4.0f} % of CSI raw)")
+    frame_bytes = 1024*128                # [S] fpga-csi.dts geometry, RAW8
+    rate_Bps = 4*26e6*2
+    frame_us = frame_bytes/rate_Bps*1e6
+    print(f"  CSI frame = 1024 B x 128 lines = {frame_bytes} B; at 4 ch x 26 MSPS one frame every {frame_us:5.0f} us;"
+          f" DMA_BUF_COUNT=16 -> {16*frame_us/1000:4.1f} ms of kernel-side buffering before loss")
+    kr = 5*2.4e6*2*8/1e6
+    print(f"  KrakenSDR 5 ch x 2.4 MSPS x 2 B = {kr:5.0f} Mbit/s ({100*kr/480:3.0f} % of one USB 2.0 link)")
+    line()
+    print("T15 915 MHz receive apertures: 4-element square (ours) and 5-element UCA (KrakenSDR rule s<=0.5, typical 0.33)")
+    for pitch_mm in (164, 288):
+        dl = pitch_mm/1000/lam915
+        print(f"  square pitch {pitch_mm} mm  d/lambda={dl:5.3f}  HPBW2el={hpbw_2el_deg(dl):5.1f} deg"
+              f"  steer-limit={grating_steer_limit_deg(dl):5.1f} deg  unambiguous=+-{unambiguous_doa_deg(dl):5.1f} deg  diagonal={pitch_mm*math.sqrt(2):4.0f} mm")
+    for s in (0.33, 0.5):
+        r = uca_radius_m(s, lam915, 5)
+        D = 2*r
+        ray = math.degrees(1.22*lam915/D) if 1.22*lam915/D < 1 else math.degrees(math.asin(min(1.0,1.22*lam915/D)))
+        print(f"  UCA n=5 s={s:4.2f}: spacing {s*lam915*1000:5.1f} mm  radius {r*1000:5.1f} mm  aperture {D*1000:5.1f} mm  Rayleigh 1.22*lambda/D = {math.degrees(1.22*lam915/D):5.1f} deg (MUSIC ~10x finer per vendor)")
+    line()
+    print("T16 Bearing precision (CRLB, two-element phase difference) vs calibration: sigma_theta = 1/(sqrt(N*SNR) * k d cos(theta))")
+    kd = 2*math.pi*0.5                    # half-wave pitch
+    for snr_db, n in ((0,1024),(10,1024),(20,1024),(20,16384)):
+        sig = 1/math.sqrt(n*lin(snr_db))/kd
+        print(f"  SNR {snr_db:3} dB, N={n:5} samples (broadside): sigma_theta = {math.degrees(sig):6.3f} deg")
+    print("  -> thermal noise is not what limits the G05 5-degree criterion; static phase calibration and multipath are.")
+    line()
+    print("T17 MAX2851 LO quality (datasheet 19-5121 Rev 1) vs 8-bit converter floor")
+    ipn_dbc = -35.0                       # [S] integrated phase noise, 1 kHz-10 MHz, loop BW 200 kHz
+    rms_rad = math.sqrt(2*lin(ipn_dbc))
+    print(f"  integrated phase noise {ipn_dbc:.0f} dBc -> rms phase {rms_rad:.4f} rad = {math.degrees(rms_rad):.2f} deg")
+    sfdr8 = 6.02*8 + 1.76
+    print(f"  fractional spur level (0-19 MHz offset) -42 dBc typ [S]; 8-bit single-tone SFDR ~ {sfdr8:.1f} dB -> spur is above the quantiser floor for a near-full-scale signal")
+    for p_in in (-30.0, -60.0):
+        print(f"  strong in-band emitter at {p_in:4.0f} dBm -> LO-spur replica at {p_in-42:5.0f} dBm, i.e. {p_in-42-(-130):3.0f} dB above a -130 dBm LoRa signal in the replica's slot")
+    wander = 800.0
+    print(f"  measured pair wander 800 Hz rms at 5800 MHz = {wander/5.8e9*1e6:.3f} ppm; PLL step 40e6/2^19 = {40e6/2**19:.3f} Hz [S]")
+    line()
+    print("T18 Receive cascade NF with the MAX2851 datasheet value (4.5 dB DSB at max gain) [S]")
+    for lna_nf, lna_g, pre_loss in ((0.8, 13.5, 0.0), (0.8, 13.5, 0.5), (1.0, 13.5, 0.5), (1.0, 20.0, 0.5)):
+        # pre_loss: switch/filter ahead of the LNA (dB); [C] LNA figures until SKY65404-31 datasheet is in resources/
+        F = lin(pre_loss) * (lin(lna_nf) + (lin(4.5) - 1)/lin(lna_g))
+        print(f"  pre-LNA loss {pre_loss:3.1f} dB, LNA NF {lna_nf:3.1f} dB G {lna_g:4.1f} dB -> system NF {db(F):4.2f} dB")
+    print("  vendor states ~1.2 dB [S]; consistent with LNA NF ~0.8-1.0 dB at >=13.5 dB gain and <=0.5 dB ahead of it")
+    print("  FTFE (915 MHz) with LNA 1.0 dB/20 dB, mixer+filter loss 7 dB, tile 1.2 dB:", end=" ")
+    F = lin(1.0) + (lin(7.0)-1)/lin(20.0) + (lin(1.2)-1)/(lin(20.0)*lin(-7.0))
+    print(f"NF {db(F):4.2f} dB (no pre-filter); + 2 dB SAW ahead -> {db(F)+2:4.2f} dB")
+    line()
+    print("T19 CPU budget for a whole-band channeliser on the Pi 5 (4x Cortex-A76, 2.4 GHz)")
+    M, P = 128, 8                          # 128 bins over 26 MHz -> 203 kHz bins (>= one 250 kHz slot per 1.23 bins); P taps per phase
+    flops_per_sample = 4*P + 5*math.log2(M)   # polyphase filter (complex MAC ~4 flop) + FFT (5 N log2 N / N)
+    per_ch = 26e6*flops_per_sample
+    peak = 2.4e9*16                        # 2 FP pipes x 4-lane FMA x 2 flop
+    print(f"  M={M} bins, P={P} taps: {flops_per_sample:.0f} flop/sample -> {per_ch/1e9:4.2f} GFLOP/s per channel, {4*per_ch/1e9:4.1f} GFLOP/s for 4 channels")
+    print(f"  A76 NEON peak {peak/1e9:4.0f} GFLOP/s per core; at 25 % efficiency {0.25*peak/1e9:4.0f} GFLOP/s -> 4-ch channeliser = {4*per_ch/(0.25*peak):4.2f} cores")
+    print(f"  quadrf-mesh measured PHY cost 0.35 core at 8 MSPS single channel [S]; decoding <=4 selected 250 kHz slots from channeliser outputs is < 0.1 core each [C]")
+    line()
+    print("T20 USB power on the Pi 5: peripherals budget 1.6 A at 5 V with a 5 A PD supply (0.6 A otherwise) [S Pi documentation]")
+    for name, a in (("KrakenSDR (needs own supply)", 2.2), ("RTL-SDR v4", 0.3), ("HackRF One", 0.5), ("USB LoRa stick (CH341+SX1262, 22 dBm)", 0.2)):
+        print(f"  {name:40} {a:3.1f} A -> {'exceeds' if a > 1.6 else 'within'} the 1.6 A budget")

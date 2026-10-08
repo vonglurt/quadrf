@@ -205,15 +205,15 @@ if __name__ == "__main__":
     wander = 800.0
     print(f"  measured pair wander 800 Hz rms at 5800 MHz = {wander/5.8e9*1e6:.3f} ppm; PLL step 40e6/2^19 = {40e6/2**19:.3f} Hz [S]")
     line()
-    print("T18 Receive cascade NF with the MAX2851 datasheet value (4.5 dB DSB at max gain) [S]")
-    for lna_nf, lna_g, pre_loss in ((0.8, 13.5, 0.0), (0.8, 13.5, 0.5), (1.0, 13.5, 0.5), (1.0, 20.0, 0.5)):
-        # pre_loss: switch/filter ahead of the LNA (dB); [C] LNA figures until SKY65404-31 datasheet is in resources/
+    print("T18 Receive cascade NF: SKY65404-31 LNA (datasheet 201512K: NF 0.8/1.0/1.5 dB min/typ/max, gain 11/13/16 dB) ahead of the MAX2851 (4.5 dB DSB) [S]")
+    for label, lna_nf, lna_g, pre_loss in (("typ, no loss ahead", 1.0, 13.0, 0.0), ("typ, 0.5 dB switch ahead", 1.0, 13.0, 0.5),
+                                            ("best corner, no loss", 0.8, 16.0, 0.0), ("worst corner, 0.5 dB", 1.5, 11.0, 0.5)):
         F = lin(pre_loss) * (lin(lna_nf) + (lin(4.5) - 1)/lin(lna_g))
-        print(f"  pre-LNA loss {pre_loss:3.1f} dB, LNA NF {lna_nf:3.1f} dB G {lna_g:4.1f} dB -> system NF {db(F):4.2f} dB")
-    print("  vendor states ~1.2 dB [S]; consistent with LNA NF ~0.8-1.0 dB at >=13.5 dB gain and <=0.5 dB ahead of it")
-    print("  FTFE (915 MHz) with LNA 1.0 dB/20 dB, mixer+filter loss 7 dB, tile 1.2 dB:", end=" ")
-    F = lin(1.0) + (lin(7.0)-1)/lin(20.0) + (lin(1.2)-1)/(lin(20.0)*lin(-7.0))
-    print(f"NF {db(F):4.2f} dB (no pre-filter); + 2 dB SAW ahead -> {db(F)+2:4.2f} dB")
+        print(f"  {label:26} LNA NF {lna_nf:3.1f} dB G {lna_g:4.1f} dB -> system NF {db(F):4.2f} dB")
+    print("  vendor states ~1.2 dB [S]; the datasheet-typical chain gives 1.30 dB (1.80 dB with 0.5 dB ahead); 1.2 dB is reached only near the best-case corner")
+    for tile_nf in (1.3, 1.8):
+        F = lin(1.0) + (lin(7.0)-1)/lin(20.0) + (lin(tile_nf)-1)/(lin(20.0)*lin(-7.0))
+        print(f"  FTFE (915 MHz): LNA 1.0 dB/20 dB, mixer+filter loss 7 dB, tile {tile_nf:3.1f} dB -> NF {db(F):4.2f} dB (no pre-filter); + 2 dB SAW ahead -> {db(F)+2:4.2f} dB")
     line()
     print("T19 CPU budget for a whole-band channeliser on the Pi 5 (4x Cortex-A76, 2.4 GHz)")
     M, P = 128, 8                          # 128 bins over 26 MHz -> 203 kHz bins (>= one 250 kHz slot per 1.23 bins); P taps per phase
@@ -227,3 +227,48 @@ if __name__ == "__main__":
     print("T20 USB power on the Pi 5: peripherals budget 1.6 A at 5 V with a 5 A PD supply (0.6 A otherwise) [S Pi documentation]")
     for name, a in (("KrakenSDR (needs own supply)", 2.2), ("RTL-SDR v4", 0.3), ("HackRF One", 0.5), ("USB LoRa stick (CH341+SX1262, 22 dBm)", 0.2)):
         print(f"  {name:40} {a:3.1f} A -> {'exceeds' if a > 1.6 else 'within'} the 1.6 A budget")
+    line()
+    print("T21 Antenna-referred compression of the tile receive chain, and FTFE level plan")
+    lna_g = 13.0                                   # [S] SKY65404-31 typ
+    print(f"  LNA input P1dB -4 dBm [S]; MAX2851 input P1dB -34 dBm at max gain, -18 at max-16 dB, -1 at max-32 dB [S]")
+    for setting, p1 in (("max gain", -34.0), ("max - 16 dB", -18.0), ("max - 32 dB", -1.0)):
+        ant = min(p1 - lna_g, -4.0)
+        print(f"  tile RF gain {setting:12}: chain compresses at {ant:6.1f} dBm referred to the element port (IC-limited unless the LNA's -4 dBm is lower)")
+    for p_node_dbm, d_m in ((22.0, 10.0), (22.0, 100.0), (30.0, 10.0)):
+        p_ant = p_node_dbm + 2.15 - fspl(d_m/1000, 915) + 2.15   # dipole-class antennas both ends
+        p_port = p_ant + 10.0                       # FTFE net gain +10 dB (SPEC-007 S-007-5)
+        print(f"  co-sited node {p_node_dbm:4.1f} dBm at {d_m:5.1f} m -> {p_ant:6.1f} dBm at the 915 MHz antenna, {p_port:6.1f} dBm at the element port after +10 dB FTFE gain"
+              f" -> needs tile RF gain <= max-{'32' if p_port > -31 else ('16' if p_port > -47 else '0')} dB or the 30 dB FTFE pad")
+    line()
+    print("T22 FTFE LO candidate: MAX2871 (datasheet 19-7106 Rev 4) at the translation LO; in-band floor = -230 + 20log10(N) + 10log10(fPFD) [S]+[D]")
+    for label, f_lo, f_pfd, mode in (("frac-N, 40 MHz PFD, 4585 MHz", 4585e6, 40e6, "fractional"), ("int-N, 20 MHz PFD, 4580 MHz", 4580e6, 20e6, "integer"),
+                                      ("int-N, 5 MHz PFD, 4585 MHz", 4585e6, 5e6, "integer"), ("int-N, 40 MHz PFD, 4600 MHz", 4600e6, 40e6, "integer")):
+        N = f_lo/f_pfd
+        floor = -230 + 20*math.log10(N) + 10*math.log10(f_pfd)
+        onef_10k = -122 + 20*math.log10(f_lo/1e9)   # 1/f term at 10 kHz offset (Note 7)
+        total_10k = db(lin(floor) + lin(onef_10k))
+        print(f"  {label:32} N={N:8.3f} ({mode:10}) in-band floor {floor:7.1f} dBc/Hz; 1/f at 10 kHz {onef_10k:7.1f}; total at 10 kHz {total_10k:7.1f} dBc/Hz; band 915 MHz -> {(f_lo+902e6)/1e6:.0f}-{(f_lo+928e6)/1e6:.0f} MHz")
+    # rough integrated phase noise 1 kHz-10 MHz with a 150 kHz loop and the 4500 MHz VCO curve (-106 dBc/Hz at 100 kHz, -20 dB/dec)
+    floor = -230 + 20*math.log10(4585e6/40e6) + 10*math.log10(40e6)
+    inband = lin(floor) * (150e3 - 1e3)
+    vco_100k = -106.0
+    outband = lin(vco_100k) * (100e3**2) * (1/150e3 - 1/10e6)
+    ipn = db(inband + outband)
+    print(f"  integrated 1 kHz-10 MHz (150 kHz loop, VCO -106 dBc/Hz at 100 kHz): ~{ipn:5.1f} dBc -> rms {math.degrees(math.sqrt(2*lin(ipn))):5.2f} deg, vs tile LO -35 dBc = 1.44 deg (T17)")
+    print("  PFD spurs -88 dBc at 50 kHz loop [S] vs tile LO fractional spurs -42 dBc [S]: the translator's own spurs are 46 dB below the tile's")
+    print("  REF_IN 10-210 MHz accepts the tile's 40 MHz reference if it can be exported (U-001-2) [S]; supply 3.3 V, <= 200 mA both outputs [S]")
+    line()
+    print("T23 SX1261/2 datasheet (DS.SX1261-2.W.APP Rev 1.1, Table 3-8, Rx boosted gain) vs the T1 model; implied NF = P_sens + 174 - 10log10(BW) - SNRmin [S]+[D]")
+    DS = {(125e3, 7): -124.0, (125e3, 12): -137.0, (250e3, 7): -121.0, (250e3, 12): -134.0, (500e3, 7): -117.0, (500e3, 12): -129.0, (10.4e3, 12): -148.0, (10.4e3, 7): -134.0}
+    for (bw, sf), ps in sorted(DS.items()):
+        nf_impl = ps + 174 - 10*math.log10(bw) - SNR_MIN[sf]
+        print(f"  BW {bw/1e3:6.1f} kHz SF{sf:2}: datasheet {ps:7.1f} dBm; T1 model NF 6 dB {sens(bw, sf, 6.0):7.1f} dBm; implied NF+impl. loss {nf_impl:4.1f} dB")
+    print("  -> the SX126x sensitivity model should use NF ~ 7 dB (6.5-8.0 implied) rather than 6 dB; T1/T7 margins for SX1262 receivers are 0.5-2 dB optimistic")
+    print(f"  Meshtastic presets by SF-interpolation of the datasheet rows (2.6 dB per SF step at 250 kHz): LONG_FAST (250k/SF11) ~ {-121 + (-134+121)/5*4:6.1f} dBm; SHORT_TURBO (500k/SF7) {-117:6.1f} dBm; LONG_TURBO (500k/SF11) ~ {-117 + (-129+117)/5*4:6.1f} dBm")
+    print("  Tolerated Tx-Rx frequency offset: +/-25 % of BW (all SF); tighter ppm limits SF12 +/-50, SF11 +/-100, SF10 +/-200 ppm [S]:")
+    for name, (bw, sf, cr) in PRESETS.items():
+        lim_bw = 0.25*bw*1e3
+        lim_ppm = {12: 50, 11: 100, 10: 200}.get(sf)
+        lim = min(lim_bw, lim_ppm*915) if lim_ppm else lim_bw
+        print(f"    {name:14} limit {lim/1e3:6.2f} kHz ({'ppm rule' if lim_ppm and lim_ppm*915 < lim_bw else '25 % BW rule'}); a 1 ppm free-running translator LO at 4585 MHz (4.6 kHz error, G05 F.05.2) uses {100*4585/lim:4.1f} % of it")
+    print("  SX126x synthesiser phase noise at 868/915 MHz: -75/-95/-100/-120/-135 dBc/Hz at 1k/10k/100k/1M/10M [S]; step 0.95 Hz; LDRO recommended for Tsym >= 16.38 ms [S]")

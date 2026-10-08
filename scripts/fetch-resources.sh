@@ -34,6 +34,8 @@ get https://meshtastic.org/docs/configuration/region-by-country/    "$R/lora/mes
 get https://raw.githubusercontent.com/tapparelj/gr-lora_sdr/master/README.md "$R/lora/gr-lora_sdr-README.md"
 get https://arxiv.org/pdf/2002.08208 "$R/lora/lora-phy-paper-tapparel.pdf"
 get https://www.semtech.com/products/wireless-rf/lora-connect/sx1262 "$R/lora/semtech-sx1262-product.html"
+get https://www.semtech.com/products/wireless-rf/lora-connect/lr1121 "$R/lora/semtech-lr1121-product.html"
+get https://www.semtech.com/products/wireless-rf/lora-connect/sx1280 "$R/lora/semtech-sx1280-product.html"
 # fccid.io serves a JavaScript challenge to scripted clients; read FCC grants at https://www.fcc.gov/oet/ea/fccid by hand
 
 # KrakenSDR (C12 comparator): GitHub wiki pages are served raw from the wiki repo

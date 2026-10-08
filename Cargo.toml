@@ -1,0 +1,18 @@
+# qrf workspace (SPEC-008 S-008-12/13). Members are added phase by phase (backlog R-01).
+[workspace]
+resolver = "3"
+members = [
+  "crates/qrf-analysis",
+  "crates/qrf-core", "crates/qrf-mipi", "crates/qrf-jtag", "crates/qrf-dsp", "crates/qrf-lora", "crates/qrf-bus",
+  "crates/qrf-tiled", "crates/qrf-sensord", "crates/qrf-dspd", "crates/qrf-overlay", "crates/qrf",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+rust-version = "1.85"
+repository = "https://github.com/vonglurt/quadrf"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

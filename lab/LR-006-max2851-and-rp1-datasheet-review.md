@@ -110,3 +110,23 @@ quieter), in which case the replica logic is unnecessary.
 ## VII. References
 
 `resources/datasheets/MAX2851.pdf` pp. 1, 3–7; `resources/datasheets/RP1-peripherals.pdf` ch. 1; `vendor/summary/analog-devices-max2851.md`; `vendor/summary/raspberry-pi-rp1.md`; SPEC-001 rev 2; SPEC-006; `analysis/linkbudget.py` T14, T17, T18.
+
+## VIII. Addendum (2026-10-08, later): the second batch of datasheets
+
+The user dropped the remaining documents in the share the same afternoon;
+`scripts/import-shared.sh` filed them (sha256 in the manifest):
+
+| Document | Identity | What it changed |
+| --- | --- | --- |
+| MAX2850 | 19-5009 Rev 2, 1/2019, 33 pp. | SPEC-001 S-001-37: −4 dBm linear OFDM per channel, ≈ +7 dBm P1dB, 31.5 dB gain control, −40 dBc sideband, −29 dBc carrier leakage, coherent LO, same synthesiser figures as the receiver |
+| MAX2871 | 19-7106 Rev 4, 6/2020, 30 pp. | SPEC-007 rev 1 S-007-15/16: translator-LO candidate at 4585 MHz (fractional, 40 MHz PFD, floor ≈ −113 dBc/Hz) or 4580 MHz (integer, 20 MHz PFD); ≈ −56 dBc integrated (0.13° rms) and −88 dBc PFD spurs, 21 and 46 dB better than the tile LO (T22) |
+| SKY65404-31 | 201512K, 2015-11-06, 9 pp. (mirror copy) | SPEC-001 S-001-38/41: LNA NF 1.0 dB typ (0.8–1.5), gain 13 dB (11–16), IP1dB −4 dBm; datasheet-typical system NF 1.30 dB, 1.80 dB with 0.5 dB ahead; the vendor's 1.2 dB is the best-case corner; antenna-referred compression −47 / −31 / −14 dBm by RF-gain setting (T18, T21) |
+| SE5004L-EK1 | 202643A, 2012-12-11, 5 pp. (evaluation-kit sheet, not the device sheet) | SPEC-001 S-001-39/40: 26 dBm linear at 5 V, 32 dB gain; erratum to S-001-9: "1 W per antenna" is BOM wording, 0.4 W linear per element and 1.6 W aggregate are what the document supports; saturated power is U-001-7 |
+| SX1261/2 | DS.SX1261-2.W.APP Rev 1.1, 2017-12, 107 pp. (mirror copy) | SPEC-003 rev 2: S-003-2 retagged `[S]` (Table 6-1 matches the values used), S-003-12…15 (SF/BW sets, sensitivities, implied NF 6–8 dB so T1 is 0.5–2 dB optimistic for SX1262 nodes, ±25 % BW offset tolerance, +22 dBm at 107–118 mA, phase noise) (T23) |
+
+Two consequences for the gates: F.01.9's "4 W aggregate" becomes "1.6 W
+aggregate linear, saturated unknown" without changing the Part 15 conclusion
+(G01 F.01.21); and the vendor BOM page's FPGA part (LFE5U-45F-7BG256C) agrees
+with the OpenOCD tap, leaving the schematic's 25F as the outlier (F.01.22).
+Still missing: the SE5004L device data sheet (DST-00316) and a current
+SX1261/2 revision (backlog V-02b, V-02c).

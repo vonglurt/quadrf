@@ -90,7 +90,7 @@ candidates that are not tile uses but belong to the same sensor bus.
 
 | Id | Candidate | Critical assumption | Kill criterion | Result |
 | --- | --- | --- | --- | --- |
-| C10 (erratum) | LoRa at 5.8 GHz to consumer devices | consumer radios at 5.8 GHz exist | Semtech SX1262 is 150–960 MHz (page in `resources/`); LR1121 tops out at 2.5 GHz and SX128x at 2.4 GHz (search summary, `[C]` until pages are filed) | Dead, now sourced for SX1262 `[S]`, family `[C]` (backlog V-05) |
+| C10 (erratum) | LoRa at 5.8 GHz to consumer devices | consumer radios at 5.8 GHz exist | Semtech SX1262 is 150–960 MHz; LR1121 is 150–960 MHz, 2.4 GHz, 2 GHz S-band and 1.55 GHz L-band; SX1280 is 2.4 GHz (product pages in `resources/lora/`, retrieved 2026-10-08) | Dead; sourced for the whole Semtech family `[S]` (V-05 done) |
 | C12 (specified) | KrakenSDR-class 5-channel coherent receiver as comparator / plug-in | software coherence stable at 915 MHz | 2.4 MHz per capture (11 retunes for the band), 2.2 A, GPL Python/C stack; no kill, but no whole-band map | Alive as comparator and optional plug-in (SPEC-011; LR-005) |
 | C13 (new) | Single USB SDR dongle (RTL2832U/R820T) as occupancy and single-slot decoder plug-in | none beyond USB | no bearing; 2.4 MHz slices | Alive as the first plug-in to exercise the software chain before the kit (backlog F-03) |
 | C14 (new) | USB SX1262 stick or a JTAG-compatible HAT as the Meshtastic participation node | HAT pins clear of 14/15/18/23 | SPEC-004 S-004-10/11 | Alive; supersedes the pin caveat in C9 (backlog F-04) |

@@ -1,0 +1,11 @@
+[package]
+name = "qrf-dspd"
+version = "0.1.0"
+description = "Channeliser, detector, bearing and decoder daemon"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+qrf-core = { path = "../qrf-core", version = "0.1.0" }

@@ -29,9 +29,10 @@ reproduction.
 | `tapparel-gr-lora_sdr/` | J. Tapparel et al., EPFL TCL — `gr-lora_sdr` | GPL-3.0 | No |
 | `meshtastic/` | Meshtastic LLC and contributors — firmware, protobufs, documentation | GPL-3.0 (firmware, protobufs); documentation per site notice | No |
 | `krakenrf/` | KrakenRF Inc. — KrakenSDR hardware documentation, `heimdall_daq_fw`, `krakensdr_doa` | GPL-3.0 (software); documentation per wiki | No |
-| `analog-devices/` | Analog Devices (Maxim Integrated) — MAX2850, MAX2851, MAX2871 datasheets | Proprietary | No |
+| `analog-devices/` | Analog Devices (Maxim Integrated) — MAX2850, MAX2851, MAX2871 datasheets (all three in hand) | Proprietary | No |
 | `raspberry-pi/` | Raspberry Pi Ltd — RP1 Peripherals datasheet, Pi 5 documentation | Proprietary datasheet; documentation CC-BY-SA-4.0 | No |
-| `semtech/` | Semtech — SX1262 product data, LR1121 product data | Proprietary | No |
+| `semtech/` | Semtech — SX1261/2 datasheet, SX1262 and LR1121 product data | Proprietary | No |
+| `skyworks/` | Skyworks Solutions — SKY65404-31 LNA datasheet, SE5004L-EK1 evaluation-kit datasheet | Proprietary | No |
 | `rust-crates/` | crates.io crates we intend to depend on | MIT / Apache-2.0 / BSD unless noted (noted: `meshtastic` GPL-3.0, `librtlsdr-rs` GPL-2.0) | No (dependencies are fetched by Cargo and locked) |
 | `alpine/` | Alpine Linux packages used on copal | Per package | No |
 | `summary/` | Our restatements of all of the above | MIT (ours) | — |

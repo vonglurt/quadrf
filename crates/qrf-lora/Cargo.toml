@@ -1,0 +1,10 @@
+[package]
+name = "qrf-lora"
+version = "0.1.0"
+description = "LoRa chirp-spread-spectrum modulator and demodulator"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]

@@ -1,0 +1,10 @@
+[package]
+name = "qrf-mipi"
+version = "0.1.0"
+description = "QuadRF receive ring and DSI staging access: mmap, ioctls, de-interleave"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]

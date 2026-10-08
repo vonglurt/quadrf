@@ -48,4 +48,4 @@ conjecture is not marked done before the gate that closes it is signed.
 | U-011-1…4 | Kraken DAQ format; phase stability; wiki licence; R820T2 NF | R-12, H-07 |
 | F.03.8 / F.05.11 | CPU budget for whole-band occupancy + DoA (model: 0.73 core, T19) | G05 bench / G07 T-7 (R-07) |
 | F.05.13 | FTFE parts cost | procurement (H-04) |
-| C10 | No LoRa silicon above 2.5 GHz (SX1262 sourced; LR1121/SX128x pages pending) | V-05 |
+| C10 | No LoRa silicon above 2.5 GHz — closed 2026-10-08: SX1262, LR1121 and SX1280 product pages in `resources/lora/` `[S]` | closed (V-05) |

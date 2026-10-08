@@ -20,6 +20,9 @@ statements; a summary here is the attribution record plus the raw facts
 | `meshtastic.md` | Meshtastic firmware, protobufs, docs | GPL-3.0 | SPEC-004 |
 | `krakenrf.md` | KrakenRF, KrakenSDR docs and software | GPL-3.0; docs unlicensed | SPEC-011 |
 | `analog-devices-max2851.md` | ADI/Maxim MAX2851 datasheet 19-5121 Rev 1 | proprietary | SPEC-001 rev 2, G05 addendum |
+| `analog-devices-max2850.md` | ADI/Maxim MAX2850 datasheet 19-5009 Rev 2 | proprietary | SPEC-001 rev 3 |
+| `analog-devices-max2871.md` | ADI/Maxim MAX2871 datasheet 19-7106 Rev 4 | proprietary | SPEC-007 rev 1 |
+| `skyworks.md` | Skyworks SKY65404-31 datasheet; SE5004L-EK1 evaluation-kit sheet | proprietary | SPEC-001 rev 3, T18, T21 |
 | `raspberry-pi-rp1.md` | Raspberry Pi Ltd, RP1 Peripherals datasheet | proprietary | SPEC-001 rev 2, SPEC-010 |
-| `semtech.md` | Semtech SX1262 / LR1121 product data | proprietary | SPEC-003, G04 errata (C10) |
+| `semtech.md` | Semtech SX1261/2 datasheet Rev 1.1; SX1262 / LR1121 product data | proprietary | SPEC-003 rev 2, T23, G04 errata (C10) |
 | `fcc-grants.md` | FCC equipment authorisations of LoRa modules (via third-party mirror) | public records; mirror unverified | SPEC-005 rev 2 |

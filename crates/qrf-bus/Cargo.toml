@@ -1,0 +1,10 @@
+[package]
+name = "qrf-bus"
+version = "0.1.0"
+description = "qrf.v1 feed-bus schema and ZeroMQ transport"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]

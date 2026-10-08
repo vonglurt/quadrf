@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft (becomes Reviewed when G05 bench criteria (1)–(3) pass) |
-| Revision | 0 |
+| Revision | 1 |
 | Date | 2026-10-08 |
 | Subject | A four-channel coherent block up-converter and external aperture that presents 902–928 MHz to the QuadRF element ports as 5487–5513 MHz |
 | Primary sources | G05 desk findings; SPEC-001; SPEC-003 |
@@ -45,6 +45,12 @@ Interfaces:
 - S-007-13. Power: 5 V, ≤ 1.5 A total, from the Pi 5 supply rail or a separate regulator; no connection to Pi GPIO. `[D]` (budget: 4 × LNA 60 mA + synthesiser 300 mA + margin)
 - S-007-14. Software: a one-line configuration (`f_translate = 4585e6`) consumed by the DoA/channeliser flowgraph and the RF-vision constant patch. `[D]` (G03 F.03.6)
 
+Local oscillator and level plan (revision 1):
+
+- S-007-15. The translator LO shall be a MAX2871-class synthesiser on its fundamental VCO (3000–6000 MHz), referenced from a 40 MHz source (its reference input accepts 10–210 MHz, so the tile's 40 MHz can drive it if U-001-2 closes), with a 40 MHz PFD in fractional mode at 4585 MHz (N = 114.625, in-band floor ≈ −113 dBc/Hz) or, to avoid fractional spurs, a 20 MHz PFD in integer mode at 4580 MHz (N = 229, floor ≈ −110 dBc/Hz, band mapped to 5482–5508 MHz); its −4 to +5 dBm output drives the 4-way divider through a buffer. `[S]`+`[D]` (resources/datasheets/MAX2871.pdf pp. 1–3; analysis T22)
+- S-007-16. The translator LO's integrated phase noise (≈ −56 dBc, 0.13° rms with a 150 kHz loop and the 4500 MHz VCO curve) and PFD spurs (−88 dBc) are small against the tile LO's −35 dBc and −42 dBc; S-007-3's spurious budget is therefore set by the mixer and its filters, not by the synthesiser. `[D]` (analysis T22, T17)
+- S-007-17. Level plan: with +10 dB net FTFE gain a 22 dBm node at 10 m presents −15 dBm at the element port, above the tile chain's compression at any RF gain above max − 32 dB (−14 dBm); the switchable 30 dB attenuator of S-007-6 shall be engaged for co-sited nodes within ≈ 100 m, and the tile RF gain shall be set from the measured element-port level rather than left at maximum. `[D]` (analysis T21; SPEC-001 S-001-41)
+
 ## Test points
 
 TP1 antenna port (915 MHz), TP2 post-LNA, TP3 mixer output (before 5.5 GHz
@@ -56,9 +62,11 @@ filter), TP4 FTFE output, TP5 LO divider port. Each a 50 Ω SMA or U.FL.
 | --- | --- | --- |
 | U-007-1 | Element-port mating connector (= U-001-1) | G05 bench |
 | U-007-2 | Whether the tile's AGC fights a fixed-gain front end at full-band capture | G05 bench |
+| U-007-3 | Mixer part and its conversion loss and LO-RF isolation at 5.5 GHz (7 dB and 30 dB assumed in F.05.4 and S-007-3) | procurement (H-04) |
 
 ## Revision history
 
 | Rev | Date | Change |
 | --- | --- | --- |
 | 0 | 2026-10-08 | Draft from G05 desk analysis |
+| 1 | 2026-10-08 | S-007-15…17 (LO candidate from the MAX2871 datasheet; level plan from T21); U-007-3 added |

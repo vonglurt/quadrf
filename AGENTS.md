@@ -13,8 +13,8 @@ how is the resulting system built in Rust on copal (Alpine Linux, Pi 5).
 - Every factual statement carries an evidence tag: `[S]` sourced, `[D]`
   derived (reproduced by `analysis/linkbudget.py` or traced to a stated
   requirement), `[M]` measured by this project, `[C]` conjecture (names what
-  closes it). Run `python3 -I scripts/lint-tags.py` before committing; it
-  must exit 0. Search-engine summaries and third-party mirrors are `[C]`.
+  closes it). Run `make check` before committing; it must exit 0 (tag linter,
+  link and citation checks, analysis, Rust build and parity). Search-engine summaries and third-party mirrors are `[C]`.
 - `specs/` are clean-room: written in our own words as behaviour-goal
   statements. Never paste vendor text, datasheet tables, or regulation text
   into `specs/`. Quote regulations verbatim only in investigations or lab
@@ -30,7 +30,9 @@ how is the resulting system built in Rust on copal (Alpine Linux, Pi 5).
   `vendor/<source>/ATTRIBUTION.md` and restated in `vendor/summary/`. GPL
   software is used only as a separate process behind documented IPC.
 - Numbers in prose must come from `analysis/` scripts. Change the script,
-  re-run, then update the document; never hand-edit a derived number.
+  re-run, then update the document; never hand-edit a derived number. The
+  Rust port `crates/qrf-analysis` must stay byte-identical (`make parity`),
+  so a new table goes into both in the same change.
 - New software is Rust (stable, edition 2024, musl target) built with Cargo,
   `Cargo.lock` committed, `cargo deny` licence allow-list; C only for kernel
   modules and unmodified vendor rebuilds; Python only in `analysis/` and

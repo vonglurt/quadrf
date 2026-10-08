@@ -1,0 +1,4 @@
+# SPEC-008 S-008-13: stable toolchain pinned. Alpine's packaged cargo (1.96) ignores this file; rustup honours it.
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]

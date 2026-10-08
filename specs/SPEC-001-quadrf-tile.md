@@ -2,8 +2,8 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Reviewed (rev 1); rev 2 additions S-001-26…36 await a second read |
-| Revision | 2 |
+| Status | Reviewed (rev 1); rev 2–3 additions S-001-26…42 await a second read |
+| Revision | 3 |
 | Date | 2026-10-08 |
 | Subject | One ScaleRF QuadRF RF tile (RF board + 4-element antenna module + ECP5 FPGA) as seen from its antenna ports, its Pi 5 interfaces, and its control registers |
 | Primary sources | `resources/scalerf/QuadRF_schematics.pdf`, `resources/scalerf/docs.html`, `resources/repos/quadrf-open-space-sdr/` (README.md, sources/fpga/jtag_src/jtag.c, sources/soapy/MipiDevice.cpp, sources/fpga/interface/rpi5_ecp5_gpio.cfg, sources/demos/csi_sweep.c), `resources/scalerf/cal_antennas.html` |
@@ -79,6 +79,15 @@ stated.
 - S-001-35. The FPGA part number is LFE5U-25F-6BG256C in the schematic, while the vendor's OpenOCD board file and JTAG tap are named lfe5u45f; which device is fitted is unknown until the IDCODE is read. `[S]`+`[C]` (schematics.txt; sources/fpga/quadrf-load; U-001-6)
 - S-001-36. Licences: the kernel modules are GPL-2.0; the SoapySDR module, CLI, GUI and demos are GPL-2.0/GPL-3.0; antenna design files are CC-BY-SA-4.0 with a patent covenant; the FPGA bitstream is proprietary but redistributable; the RF core is all rights reserved. `[S]` (debian/copyright; updates.html FAQ; licenses/LICENSE.md; vendor/scalerf/ATTRIBUTION.md)
 
+### Transmitter, LNA and PA facts from the datasheets (revision 3)
+
+- S-001-37. The transmitter IC (MAX2850) delivers at most −4 dBm per channel of OFDM at −34 dB EVM with ≈ 11 dB more to its output 1 dB compression, has a 31.5 dB gain-control range in 0.5 dB steps, −40 dBc unwanted sideband and −29 dBc typical (−15 dBc maximum) carrier leakage; its up-conversion LO is coherent among the four transmit channels and its synthesiser has the same −35 dBc integrated phase noise, −42 dBc spurs, 76.294 Hz step and 40 MHz reference as the receiver's. `[S]` (resources/datasheets/MAX2850.pdf pp. 1, 5–7; vendor/summary/analog-devices-max2850.md)
+- S-001-38. The receive LNA (SKY65404-31) covers 4.9–5.9 GHz with noise figure 1.0 dB typical (0.8–1.5 dB), gain 13 dB typical (11–16 dB), input IP3 +7 dBm, input 1 dB compression −4 dBm, reverse isolation −20 dB, 11 mA at 3 V, and a shutdown pin. `[S]` (resources/datasheets/SKY65404-31.pdf pp. 1–3; vendor/summary/skyworks.md)
+- S-001-39. The power amplifier (SE5004L) delivers 26 dBm of linear OFDM power (3 % EVM, 64-QAM, 54 Mbit/s) at 5 V with 32 dB of gain, an integrated detector of 15 dB range and a 3.8 GHz notch, and is enabled by 2.85 V on its reference pin; the document in hand is the evaluation-kit sheet and states no saturated power or supply current. `[S]` (resources/datasheets/SE5004L.pdf pp. 1, 4)
+- S-001-40. Erratum to S-001-9: "rated 1 W" is the vendor's BOM wording ("Skyworks 1W SiGe SE5004L"; "1 Watt Tx power per antenna"); the figure the documents support is 26 dBm (0.4 W) linear per element and 32 dBm (1.6 W) aggregate linear; the saturated rating is unknown (U-001-7). The conclusion of S-001-9 and G01 F.01.9, that a §15.247 transmitter must be driven below the hardware's capability, stands with 1.6 W in place of 4 W. `[S]`+`[C]`+`[D]` (docs.html BOM; README.md; S-001-39)
+- S-001-41. System noise figure from the datasheets: 1.30 dB with the typical LNA and nothing ahead of it, 1.80 dB with 0.5 dB of switch loss ahead, 0.96 dB at the LNA's best-case corner and 2.42 dB at its worst; the vendor's ≈ 1.2 dB lies near the best-case corner. Antenna-referred compression is set by the receiver IC at every RF gain above max − 32 dB: −47 dBm at maximum gain, −31 dBm at max − 16 dB, −14 dBm at max − 32 dB (then the LNA's −4 dBm applies). `[D]` (analysis T18, T21)
+- S-001-42. Erratum to S-001-35: the vendor BOM page names the FPGA LFE5U-45F-7BG256C, which agrees with the OpenOCD tap name; only the schematic export says LFE5U-25F-6BG256C. The fitted part is therefore most likely the 45F, and the IDCODE read (U-001-6) decides. `[S]`+`[C]` (docs.html BOM; schematics.txt)
+
 ## Interfaces we depend on
 
 - Element RF port: the board-to-board connector between RF board and antenna module (footprint `BWCD-L5.0W2.0H2.5`). Impedance and mating part are not stated; see U-001-1.
@@ -95,6 +104,7 @@ stated.
 | U-001-4 | Element pattern and gain of the circular patch at 5.5 and 5.8 GHz (OpenEMS model exists; not simulated by us) | G05 or G06 desk |
 | U-001-5 | Behaviour of the factory bitstream's auto-steer and RF-vision maths when fed a translated band | G05 bench |
 | U-001-6 | Which ECP5 device is fitted (LFE5U-25F per schematic vs lfe5u45f per OpenOCD tap name); read IDCODE | bench, first power-up |
+| U-001-7 | SE5004L saturated output power and 1 dB compression (device data sheet DST-00316, not in hand); whether "1 W per antenna" is Psat | manual fetch into the share; else bench power measurement |
 
 ## Revision history
 
@@ -102,3 +112,4 @@ stated.
 | --- | --- | --- |
 | 1 | 2026-10-08 | First reviewed version |
 | 2 | 2026-10-08 | S-001-26…36 from the MAX2851 datasheet (supplied by the user), the vendor driver sources, the RP1 datasheet and the licence files; U-001-3 bounded by S-001-31; U-001-6 added |
+| 3 | 2026-10-08 | S-001-37…42 from the MAX2850, SKY65404-31 and SE5004L-EK1 documents (user-supplied) and the vendor BOM page; errata to S-001-9 (PA rating) and S-001-35 (FPGA part); U-001-7 added |

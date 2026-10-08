@@ -6,7 +6,7 @@
 python3 analysis/linkbudget.py
 ```
 
-Tables are numbered T1…T20 and are referenced by that number from the
+Tables are numbered T1…T23 and are referenced by that number from the
 investigations, specs and lab reports. No third-party dependencies.
 
 | Table | Content | Cited by |
@@ -28,9 +28,13 @@ investigations, specs and lab reports. No third-party dependencies.
 | T15 | 915 MHz apertures: 4-element square and 5-element UCA | SPEC-011, LR-005 |
 | T16 | Bearing precision CRLB vs calibration | G05 addendum, LR-003 |
 | T17 | MAX2851 phase noise and spurs vs 8-bit floor | SPEC-001 rev 2, G05 addendum, LR-006 |
-| T18 | Receive cascade NF with the datasheet value; FTFE cascade | SPEC-001 rev 2, G05 addendum, LR-006 |
+| T18 | Receive cascade NF from the SKY65404-31 and MAX2851 datasheets; FTFE cascade | SPEC-001 rev 2–3, G05 addendum, LR-006 |
 | T19 | CPU budget for the whole-band channeliser | SPEC-008, LR-003 |
 | T20 | USB power budget on the Pi 5 | SPEC-009, SPEC-011, LR-005 |
+| T21 | Antenna-referred compression of the tile receive chain; FTFE level plan | SPEC-001 rev 3, SPEC-007 rev 1, G05 addendum |
+| T22 | MAX2871 translator-LO phase noise and spurs vs the tile LO | SPEC-007 rev 1, G05 addendum |
+| T23 | SX1261/2 datasheet sensitivities vs the T1 model, implied NF, offset tolerances | SPEC-003 rev 2, G05 addendum |
 
-A Rust port of these tables (`qrf-analysis`) is backlog entry A-02; its
-acceptance check is byte-identical output to this script.
+The Rust port of these tables is `crates/qrf-analysis` (backlog A-02, done
+2026-10-08); `make parity` checks that it prints exactly this script's output.
+Add a table to both in the same change.

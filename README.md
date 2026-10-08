@@ -30,9 +30,11 @@ of carried-forward facts into the next step. The design track is ledgered in
 | `specs/` | Clean-room specifications (SPEC-001…006, 011) and implementation specs (SPEC-007…010) |
 | `investigations/` | The gated sequence G00…G07, the gate ledger and the risk register |
 | `lab/` | Lab reports: audit, procedures, architecture, platform, receiver options, datasheet review |
-| `analysis/` | The script that produces every derived number (T1–T20) |
+| `analysis/` | The script that produces every derived number (T1–T23) |
+| `crates/`, `Cargo.toml` | The qrf Cargo workspace; `qrf-analysis` is the byte-identical Rust port of the analysis |
+| `Makefile` | `make check` runs every linter, the analysis, the Rust build and the Rust/Python parity test |
 | `vendor/` | Licence ledger per upstream, own-words summaries of what we may not copy, public-domain CFR text |
-| `scripts/` | Fetch, import, vendor, lint and link-check tools |
+| `scripts/` | Fetch, import, vendor, tag-lint, link-check and citation-check tools |
 | `resources/` | Gitignored raw sources (vendor docs, CFR pages, datasheets, cloned repos) |
 
 ## State of the investigation (2026-10-08)
@@ -58,3 +60,4 @@ Headline findings, each proved or sourced in the investigations:
 6. Four interleaved channels at 26 MSPS are 59 % of the CSI link and arrive every 630 µs with 10 ms of kernel buffering; a 128-bin channeliser for all 104 slots costs about 0.73 of one A76 core (SPEC-001 rev 2, SPEC-008).
 7. Everything below the application layer exists in Alpine for the Pi 5 (kernel 6.18.52 with headers, akms, OpenOCD, SoapySDR, Rust); the vendor's Debian/systemd/Flask layer is replaced by Rust processes on copal, with GPL components isolated behind IPC (SPEC-008, SPEC-010, LR-003, LR-004).
 8. Of the Meshtastic Pi HATs, only the MeshAdv-Mini 900M22S and the USB sticks are clear of the tile's JTAG pins; every HAT with reset on GPIO 18 collides (SPEC-004 rev 2).
+9. With all six component datasheets in hand: the receive chain's typical noise figure is 1.3 dB (the vendor's 1.2 dB is the LNA's best-case corner), the PA is 26 dBm linear per element (the "1 W" is BOM wording; saturated power unknown), a MAX2871 translator LO would be 21 dB cleaner than the tile's own LO, and the SX1262 node model gains 0.5–2 dB of realism from the datasheet sensitivities (SPEC-001 rev 3, SPEC-003 rev 2, SPEC-007 rev 1).

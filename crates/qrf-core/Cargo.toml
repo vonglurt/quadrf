@@ -1,0 +1,10 @@
+[package]
+name = "qrf-core"
+version = "0.1.0"
+description = "qrf core types, configuration and time base"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]

@@ -1,0 +1,10 @@
+[package]
+name = "qrf-jtag"
+version = "0.1.0"
+description = "QuadRF transceiver control through the CSI node's JTAG ioctls"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]

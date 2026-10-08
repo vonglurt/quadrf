@@ -1,0 +1,27 @@
+# cargo-deny configuration (SPEC-008 S-008-13; docs/00-process.md §6).
+# Licence allow-list for MIT binaries; GPL crates are refused here and may only
+# live in a separately licensed plug-in crate with its own deny.toml.
+[graph]
+targets = ["aarch64-unknown-linux-musl"]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+
+[licenses]
+version = 2
+allow = [
+  "MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause",
+  "ISC", "Zlib", "Unicode-3.0", "Unicode-DFS-2016", "MPL-2.0", "CC0-1.0", "BSL-1.0", "0BSD",
+]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow-wildcard-paths = true   # in-workspace path dependencies carry no version by design
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

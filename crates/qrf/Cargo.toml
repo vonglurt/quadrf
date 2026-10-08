@@ -1,0 +1,11 @@
+[package]
+name = "qrf"
+version = "0.1.0"
+description = "qrf command-line tool"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+qrf-core = { path = "../qrf-core", version = "0.1.0" }

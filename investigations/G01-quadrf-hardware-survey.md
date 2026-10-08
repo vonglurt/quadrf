@@ -99,3 +99,10 @@ licence files) add the following; see LR-006 and SPEC-001 revision 2.
 
 Carry-forward additions: F.01.13, F.01.14, F.01.15 to G05; F.01.18 to the
 design track (SPEC-008, SPEC-010).
+
+Later the same day (second batch of datasheets, LR-006 addendum):
+
+- F.01.19 The transmitter IC delivers at most −4 dBm per channel of linear OFDM (≈ +7 dBm at 1 dB compression) with coherent LO among its four channels, −40 dBc sideband and −29 dBc carrier leakage; its synthesiser matches the receiver's (−35 dBc, −42 dBc spurs, 76.294 Hz). `[S]` (SPEC-001 S-001-37)
+- F.01.20 The receive LNA is NF 1.0 dB / 13 dB gain typical with −4 dBm input P1dB; the datasheet-typical system NF is 1.30 dB (1.80 dB with 0.5 dB of switch loss ahead), and the vendor's ≈ 1.2 dB is reached only near the LNA's best-case corner; antenna-referred compression is −47 dBm at maximum RF gain and −14 dBm at max − 32 dB. `[S]`+`[D]` (SPEC-001 S-001-38, S-001-41; analysis T18, T21)
+- F.01.21 Erratum to F.01.9: the PA document in hand supports 26 dBm (0.4 W) linear per element, 1.6 W (32 dBm) aggregate linear; "1 W per antenna" is the vendor's BOM wording and the saturated rating is unknown (U-001-7). A §15.247 transmitter must still be driven below the hardware's capability; the factor becomes 1/1.6 instead of 1/4. `[S]`+`[C]`+`[D]` (SPEC-001 S-001-39/40)
+- F.01.22 Erratum to F.01.16: the vendor BOM page names the FPGA LFE5U-45F-7BG256C, matching the OpenOCD tap; the schematic's LFE5U-25F is the outlier; U-001-6 stays open until the IDCODE is read. `[S]`+`[C]` (SPEC-001 S-001-42)

@@ -112,3 +112,10 @@ table.
 
 Open conjecture added: U-001-6 (FPGA part) is read at first power-up (backlog
 H-01).
+
+Later the same day (second batch of datasheets):
+
+- F.05.21 Level plan from the datasheets: with +10 dB net FTFE gain, a 22 dBm node at 10 m presents −15 dBm at the element port, which exceeds the tile chain's compression at every RF gain above max − 32 dB (−14 dBm); the 30 dB switchable attenuator (SPEC-007 S-007-6) is mandatory for co-sited nodes within ≈ 100 m, and the tile RF gain must be set from the element-port level. F.05.6's "procedural" mitigation is now quantified. `[S]`+`[D]` (SPEC-001 S-001-41; analysis T21)
+- F.05.22 LO candidate: a MAX2871 on its fundamental VCO at 4585 MHz (fractional, 40 MHz PFD, floor ≈ −113 dBc/Hz) or 4580 MHz (integer, 20 MHz PFD, floor ≈ −110 dBc/Hz) has ≈ −56 dBc integrated phase noise (0.13° rms) and −88 dBc PFD spurs, 21 dB and 46 dB better than the tile LO; its reference input (10–210 MHz) accepts the tile's 40 MHz if U-001-2 closes; the FTFE spurious budget is a mixer/filter matter. `[S]`+`[D]` (SPEC-007 S-007-15/16; analysis T22)
+- F.05.23 The FTFE cascade NF is unchanged by the datasheet tile NF (1.19 dB with the tile at 1.3 dB, 1.22 dB at 1.8 dB; 3.2 dB with a 2 dB SAW ahead). `[D]` (analysis T18)
+- F.05.24 Refinement of F.05.2: the SX126x receiver tolerates ±25 % of BW of carrier offset (≥ 31.25 kHz for every Meshtastic preset), so a 1 ppm free-running translator LO (4.6 kHz at 4585 MHz) is not marginal for LONG_FAST on the transmit side (C4); on the receive side it sets a ≥ ±5 kHz acquisition-range requirement on our own demodulator (SPEC-008 S-008-6). `[S]`+`[D]` (SPEC-003 S-003-14; analysis T23)

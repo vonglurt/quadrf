@@ -1,0 +1,10 @@
+[package]
+name = "qrf-analysis"
+version = "0.1.0"
+description = "Reproducible numerical basis for the quadrf documents: tables T1–T23, byte-identical to analysis/linkbudget.py (backlog A-02)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]

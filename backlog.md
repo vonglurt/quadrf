@@ -29,7 +29,7 @@ the behaviour each entry must deliver is in the spec statement it names.
 | F | field tools, nodes, firmware, field tests | `investigations/G07`, `investigations/records/` |
 | S | system-level tests | `investigations/records/` |
 
-**Standing:** 57 open · 0 in progress · 9 done · 0 dropped. Written 2026-10-08.
+**Standing:** 53 open · 0 in progress · 16 done · 0 dropped. Written 2026-10-08.
 
 ---
 
@@ -40,19 +40,15 @@ the behaviour each entry must deliver is in the spec statement it names.
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
 | D-05 | Second read of the revision-2 additions (SPEC-001 S-001-26…36, SPEC-002 S-002-14…22, SPEC-004 S-004-9…12, SPEC-005 S-005-20…22) and of SPEC-008…011; each `[S]` opened at its cited line | process §3.1 | Reader's initials and date in each revision table; status returns to Reviewed |
-| D-06 | `make check` target: `scripts/lint-tags.py`, `scripts/check-links.py`, `python3 analysis/linkbudget.py > /dev/null` | process §2 | `make check` exits 0 on a clean tree and 1 when a tag is removed from any statement |
-| A-02 | Rust port of `analysis/linkbudget.py` as crate `qrf-analysis` printing T1–T20 | process §6 (Rust) | `diff <(python3 analysis/linkbudget.py) <(cargo run -q -p qrf-analysis)` is empty |
-| V-02 | Import MAX2850, MAX2871, SX1262, SE5004L, SKY65404-31 datasheets through the UTM share | LR-006 §D | `scripts/import-shared.sh` reports six PDFs in `resources/datasheets/`; manifest rows added; T18 placeholders replaced |
-| V-03 | SPEC-003 S-003-2 SNR thresholds and bandwidth list retagged to the SX1262 datasheet | SPEC-003 | S-003-2 cites the datasheet page; a `vendor/summary/semtech.md` table lists the values |
-| V-04 | Read the FCC grants of every module in hand at fcc.gov/oet/ea/fccid (class, frequency rows, grant notes) | U-005-1, U-005-4 | SPEC-005 S-005-22 retagged `[S]` or deleted; a table of FCC IDs in G07 §7 |
-| V-05 | File the Semtech LR1121 and SX128x product pages in `resources/lora/` | G04 C10 | C10 family statement retagged `[S]` in the G04 addendum |
+| V-02b | Import the SE5004L *device* data sheet (DST-00316; the file in hand is the evaluation-kit sheet) for saturated power and P1dB | SPEC-001 U-001-7 | `import-shared.sh` reports it; S-001-9/40 retagged; U-001-7 closed |
+| V-02c | Fetch the current SX1261/2 datasheet revision from semtech.com (the copy in hand is Rev 1.1, 2017) and diff the values used in S-003-12…15 | SPEC-003 U-003-2 | Revision and date recorded in SPEC-003's revision table; any changed value updated |
+| V-04 | Read the FCC grants of every module in hand at fcc.gov/oet/ea/fccid (class, frequency rows, grant notes). Needs a browser: apps.fcc.gov returns "Access Denied" to scripted requests and fccid.io a JavaScript challenge (2026-10-08) | U-005-1, U-005-4 | SPEC-005 S-005-22 retagged `[S]` or deleted; a table of FCC IDs in G07 §7 |
 | V-06 | Re-check §15.247 and §97.311 at ecfr.gov before any transmission campaign | U-005-2 | Date and "no change" or the diff recorded in SPEC-005's revision table |
 
 ### P1 — Rust workspace with simulated feeds (no hardware)
 
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
-| R-01 | Cargo workspace at the repository root with crates `qrf-core`, `qrf-mipi`, `qrf-jtag`, `qrf-dsp`, `qrf-lora`, `qrf-bus`, binaries `qrf-tiled`, `qrf-sensord`, `qrf-dspd`, `qrf-overlay`, `qrf`; `rust-toolchain.toml`; `deny.toml` licence allow-list; `Cargo.lock` committed | SPEC-008 S-008-12/13 | `cargo build --target aarch64-unknown-linux-musl` and `cargo deny check` pass on the VM; `target/` ignored |
 | R-02 | `qrf-bus`: protobuf schema `qrf.v1` (`Header`, `Spectrum`, `Occupancy`, `Bearing`, `LoraFrame`, `Scatter`, `Calibration`, `Health`) and ZeroMQ PUB/SUB transport | SPEC-009 S-009-4/5/9 | A simulated plug-in publishes all eight types; a subscriber decodes them; rate limits enforced (S-009-10) |
 | R-03 | `qrf-mipi`: ring and ioctl bindings (`CSI_IOC_*`, `DSI_IOC_*` numbers derived from magic/number/size), de-interleave with scalar reference and NEON kernel, a mock device backed by a file | SPEC-002 S-002-14…17; SPEC-008 S-008-5 | Property test: NEON == scalar on 10⁶ random spans; mock replays a recorded ring at 208 MB/s without loss on the VM |
 | R-06 | ZeroMQ interoperability: the native `zeromq` crate against pyzmq and a GNU Radio ZMQ source block | U-008-3 | 10 000 messages each way, none lost or reordered |
@@ -144,6 +140,13 @@ the behaviour each entry must deliver is in the spec statement it names.
 
 | ID | Entry | Done | Commit |
 | --- | --- | --- | --- |
+| R-01 | Cargo workspace at the repository root: `Cargo.toml` (resolver 3, edition 2024), `rust-toolchain.toml` pinned 1.98.1, `deny.toml` allow-list, `Cargo.lock` committed; crates `qrf-analysis` (real) and skeletons `qrf-core`, `qrf-mipi`, `qrf-jtag`, `qrf-dsp`, `qrf-lora`, `qrf-bus`, `qrf-tiled`, `qrf-sensord`, `qrf-dspd`, `qrf-overlay`, `qrf`, each `lib.rs`/`main.rs` naming the SPEC-008/009 statements it will implement; `#![forbid(unsafe_code)]` everywhere except `qrf-mipi` and `qrf-dsp`. **Check:** `cargo build --locked --release --workspace` (host triple is `aarch64-unknown-linux-musl`), `cargo test` (6 unit tests), `cargo deny check` (advisories, bans, licenses, sources ok) and `cargo audit` (12 crates, no advisories) pass; `target/` ignored | 2026-10-08 | *(this working tree)* |
+| A-02 | `crates/qrf-analysis`: Rust port of `analysis/linkbudget.py`, tables T1–T23. **Check:** `make parity` — 189 lines byte-identical to the Python output on the first build | 2026-10-08 | *(this working tree)* |
+| D-06 | `Makefile` with `check` (lint, links, cites, analysis, shell syntax, rust build+test, parity, deny-if-installed) | 2026-10-08 | *(this working tree)* |
+| D-08 | `scripts/check-cites.py`: every S-/F.-/U-/SPEC-/Tnn reference and every cited `resources/` path resolves; 194 S, 98 F, 41 U, 23 tables, 11 specs defined; 0 unresolved | 2026-10-08 | *(this working tree)* |
+| V-05 | Semtech LR1121 and SX1280 product pages filed; G04 C10 retagged `[S]`; risk register row closed | 2026-10-08 | *(this working tree)* |
+| V-02 | MAX2850, MAX2871, SKY65404-31, SE5004L-EK1 and SX1261/2 datasheets imported through the UTM share (six PDFs in `resources/datasheets/`), manifest rows with sha256, T18 placeholders replaced by datasheet values, T21–T23 added | 2026-10-08 | *(this working tree)* |
+| V-03 | SPEC-003 S-003-2 retagged to the SX1261/2 datasheet Table 6-1; S-003-12…15 added | 2026-10-08 | *(this working tree)* |
 | D-01 | `index.md`: one page that links every document, states the two tracks and today's state | 2026-10-08 | *(this working tree)* |
 | D-02 | `backlog.md` (this file) with phases P0–P7 and a check per entry | 2026-10-08 | *(this working tree)* |
 | D-03 | `vendor/` ledger: policy README, 11 attribution files, 9 own-words summaries, public-domain CFR text regenerated by `scripts/vendor-cfr.py` | 2026-10-08 | *(this working tree)* |

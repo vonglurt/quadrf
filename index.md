@@ -44,9 +44,9 @@ secure. The extension does not change the gates; it adds a design track.
 
 | Spec | Subject | Status |
 | --- | --- | --- |
-| [`SPEC-001`](specs/SPEC-001-quadrf-tile.md) | The QuadRF tile: frequency, converters (now datasheet-backed), geometry, beamforming, interfaces, data path, licences | Reviewed; rev 2 additions await a second read |
+| [`SPEC-001`](specs/SPEC-001-quadrf-tile.md) | The QuadRF tile: frequency, converters, LNA and PA (datasheet-backed), geometry, beamforming, interfaces, data path, licences | Reviewed; rev 2–3 additions await a second read |
 | [`SPEC-002`](specs/SPEC-002-quadrf-host-software.md) | The vendor's Pi 5 software: services, device-node ABI (ring, ioctls, stats), boot, bring-up | Reviewed; rev 2 additions await a second read |
-| [`SPEC-003`](specs/SPEC-003-lora-css-phy.md) | LoRa chirp-spread-spectrum PHY as Meshtastic uses it | Reviewed |
+| [`SPEC-003`](specs/SPEC-003-lora-css-phy.md) | LoRa chirp-spread-spectrum PHY as Meshtastic uses it; SX1261/2 datasheet figures | Reviewed; rev 2 additions await a second read |
 | [`SPEC-004`](specs/SPEC-004-meshtastic-radio-layer.md) | Meshtastic radio layer, Linux daemon, HAT and USB-radio pin tables | Reviewed; rev 2 additions await a second read |
 | [`SPEC-005`](specs/SPEC-005-us-regulatory-envelope.md) | 47 CFR Parts 15 and 97 as behaviour goals; exposure limits | Reviewed; rev 2 additions await a second read |
 | [`SPEC-006`](specs/SPEC-006-quadrf-mesh-lora-phy.md) | The third-party LoRa PHY and Meshtastic daemon on the tile (Air-IPC) | Reviewed |
@@ -56,7 +56,7 @@ secure. The extension does not change the gates; it adds a design track.
 
 | Spec | Subject | Status |
 | --- | --- | --- |
-| [`SPEC-007`](specs/SPEC-007-ftfe-implementation.md) | 915 MHz frequency-translating front end and external aperture | Draft (becomes Reviewed at G05 bench) |
+| [`SPEC-007`](specs/SPEC-007-ftfe-implementation.md) | 915 MHz frequency-translating front end, LO candidate, level plan, external aperture | Draft rev 1 (becomes Reviewed at G05 bench) |
 | [`SPEC-008`](specs/SPEC-008-system-architecture-rust.md) | System architecture: Rust processes, capture, DSP, bus, overlay, security, workspace | Draft |
 | [`SPEC-009`](specs/SPEC-009-sensor-plugins-and-feed-bus.md) | Sensor plug-ins (USB, HAT, tile), message schema, time base, azimuth frame, conformance, the parallel-feed test | Draft |
 | [`SPEC-010`](specs/SPEC-010-copal-platform.md) | copal platform: kernel, modules, boot, OpenRC services, tuning options, security, packaging | Draft |
@@ -76,7 +76,9 @@ secure. The extension does not change the gates; it adds a design track.
 
 | Path | Content |
 | --- | --- |
-| [`analysis/linkbudget.py`](analysis/linkbudget.py) ([README](analysis/README.md)) | Every `[D]` number, tables T1–T20 |
+| [`analysis/linkbudget.py`](analysis/linkbudget.py) ([README](analysis/README.md)) | Every `[D]` number, tables T1–T23 |
+| [`crates/README.md`](crates/README.md) | The qrf Cargo workspace: `qrf-analysis` (byte-identical Rust port of the analysis, done) and the crates to come |
+| [`Makefile`](Makefile) | `make check`: tag linter, link and citation checks, analysis, shell syntax, Rust build and test, Rust/Python parity, cargo-deny when installed |
 | [`docs/resources-manifest.md`](docs/resources-manifest.md) | What is in gitignored `resources/`, from where, when, which commit, which sha256 |
 | [`vendor/README.md`](vendor/README.md) | Licence classes and the rule for each; per-upstream `ATTRIBUTION.md` under `vendor/<source>/` |
 | [`vendor/summary/README.md`](vendor/summary/README.md) | Own-words restatements of everything we may not copy (datasheets, GPL code, CC BY-SA files, vendor pages) |
@@ -86,6 +88,7 @@ secure. The extension does not change the gates; it adds a design track.
 | [`scripts/vendor-cfr.py`](scripts/vendor-cfr.py) | Regenerates `vendor/cfr47/` from the LII pages |
 | [`scripts/lint-tags.py`](scripts/lint-tags.py) | Finds untagged statements; exit 1 blocks a commit |
 | [`scripts/check-links.py`](scripts/check-links.py) | Checks that every relative Markdown link resolves |
+| [`scripts/check-cites.py`](scripts/check-cites.py) | Checks that every S-/F.-/U-/SPEC-/table reference and every cited `resources/` path resolves |
 | [`docs/templates/`](docs/templates/) | Templates: investigation, gate record, spec, measurement record, lab report |
 | [`AGENTS.md`](AGENTS.md) | Rules for agents working here |
 | [`LICENSE`](LICENSE) | MIT |
@@ -110,7 +113,7 @@ be marked done until the gate that closes the conjecture is signed.
 
 ## Conventions on one screen
 
-- Tags: `[S]` sourced (file and line), `[D]` derived (script table or stated requirement), `[M]` measured (dated record), `[C]` conjecture (names what closes it). Untagged statements fail `scripts/lint-tags.py`.
+- Tags: `[S]` sourced (file and line), `[D]` derived (script table or stated requirement), `[M]` measured (dated record), `[C]` conjecture (names what closes it). Untagged statements fail `scripts/lint-tags.py`; dangling references fail `scripts/check-cites.py`; `make check` runs everything.
 - Numbers come from `analysis/linkbudget.py`; prose cites "analysis Tnn".
 - Signed gates are not edited; evidence that arrives later goes into a dated "Errata and addenda" section.
 - Sources: raw in `resources/` (ignored), listed in the manifest; licences in `vendor/`; restatements in `vendor/summary/`.
@@ -120,6 +123,6 @@ be marked done until the gate that closes the conjecture is signed.
 ## State on 2026-10-08
 
 - Gates: G00–G04 PASS; G05 and G06 OPEN on bench work; G07 DRAFT.
-- Backlog: 57 open, 9 done, 0 dropped; current phase P0 (ledger hygiene), P1 (Rust workspace with simulated feeds) and P2 (field tools) can run before the kit arrives.
-- Sources in hand: vendor repository at commit `8b61ae5`, schematic export 2026-05-22, MAX2851 and RP1 datasheets, fourteen CFR sections, KrakenSDR documentation, Meshtastic firmware at `364a111`, `quadrf-mesh` at `ad3ed31`. Missing: MAX2850, MAX2871, SX1262, SE5004L, SKY65404-31 datasheets (drop them in the share; see LR-002 P1).
-- Headline numbers: the tile cannot tune below 4900 MHz (datasheet-backed); the Part 15 EIRP ceiling at 915 MHz is 36 dBm for any antenna; the tile LO's −42 dBc spurs sit above the 8-bit floor; four interleaved channels at 26 MSPS use 59 % of the CSI link; the whole-band channeliser costs about 0.73 of one core.
+- Backlog: 53 open (0 in progress), 16 done, 0 dropped; current phase P0 (ledger hygiene), P1 (Rust workspace with simulated feeds) and P2 (field tools) can run before the kit arrives.
+- Sources in hand: vendor repository at commit `8b61ae5`, schematic export 2026-05-22, MAX2850, MAX2851, MAX2871, SKY65404-31, SE5004L-EK1, SX1261/2 and RP1 datasheets, fourteen CFR sections, KrakenSDR documentation, Meshtastic firmware at `364a111`, `quadrf-mesh` at `ad3ed31`. Missing: the SE5004L device data sheet (DST-00316, for saturated power) and a current SX1261/2 revision (drop them in the share; see LR-002 P1).
+- Headline numbers: the tile cannot tune below 4900 MHz (datasheet-backed); the Part 15 EIRP ceiling at 915 MHz is 36 dBm for any antenna; the tile LO's −42 dBc spurs sit above the 8-bit floor; four interleaved channels at 26 MSPS use 59 % of the CSI link; the whole-band channeliser costs about 0.73 of one core; the datasheet-typical receive NF is 1.3 dB and the PA is 26 dBm linear per element.

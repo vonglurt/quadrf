@@ -21,7 +21,9 @@ mkdir -p "$DST"
 [ -d "$SRC" ] || { echo "no shared folder at $SRC" >&2; exit 1; }
 
 part_of() { # first-page text -> part number, or empty
-    pdftotext -f 1 -l 1 "$1" - 2>/dev/null | grep -o -E 'MAX28(50|51|71)|SX126[128]|LR1121|SE5004L|SKY65404-31|RP1 Peripherals|BCM2712|RP2040|RP2350' | head -1 | tr ' ' '-'
+    page="$(pdftotext -f 1 -l 1 "$1" - 2>/dev/null)"
+    case "$page" in *SX1261/2*) echo SX1261-2; return ;; esac
+    printf '%s' "$page" | grep -o -E 'MAX28(50|51|71)|SX126[128]|LR1121|SE5004L|SKY65404-31|RP1 Peripherals|BCM2712|RP2040|RP2350' | head -1 | tr ' ' '-'
 }
 
 for f in "$SRC"/*.pdf "$SRC"/*.PDF; do

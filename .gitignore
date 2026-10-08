@@ -1,0 +1,13 @@
+# Raw downloads, cloned reference repos, datasheets: never committed.
+# Re-create with scripts/fetch-resources.sh; inventory in docs/resources-manifest.md
+resources/
+
+# macOS AppleDouble metadata written through the UTM share
+._*
+.DS_Store
+
+# Build / scratch
+build/
+*.pyc
+__pycache__/
+*.swp

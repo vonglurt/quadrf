@@ -2,7 +2,7 @@
 PY := python3 -I
 TMP := $(shell mktemp -d 2>/dev/null || echo /tmp/quadrf-make)
 
-.PHONY: check lint links cites analysis sh-syntax rust parity deny audit vendor-cfr fetch import oracle corpus corpus-check lora-vectors lora-check lora-oracle-check clean
+.PHONY: check lint links cites analysis sh-syntax rust parity deny audit vendor-cfr fetch import oracle corpus corpus-check lora-vectors lora-check lora-oracle-check mipi-check figures clean
 
 ## check: everything that must pass before a commit
 check: lint links cites analysis sh-syntax rust parity deny
@@ -89,3 +89,15 @@ lora-oracle-check:
 	  ./target/release/examples/make_cell $(LORA_RS) --preset $$p --snr 0 --frames 50 --seed 20261008 || exit 1; done
 	$(PY) scripts/make-corpus.py verify --out $(LORA_RS) --cells $$(ls $(LORA_RS) | tr '\n' ',' | sed 's/,$$//')
 	./target/release/examples/corpus_check $(LORA_RS)
+
+## mipi-check: backlog R-03, the 60-s run: the mock receive ring at the T14 cadence through qrf-mipi's Reader and NEON de-interleave; record and first frame under resources/measurements/R-03 (idle machine)
+MIPI_MEAS := resources/measurements/R-03
+mipi-check:
+	cargo build --locked --release -p qrf-mipi --examples
+	@mkdir -p $(MIPI_MEAS)
+	./target/release/examples/mipi_soak --seconds 60 --json $(MIPI_MEAS)/mipi-soak-60s.json --dump-frame $(MIPI_MEAS)/frame0.cs8
+
+## figures: lab-report figures from the measurement records and the dot sources (needs graphviz and matplotlib)
+figures:
+	$(PY) analysis/plot-lr009.py
+	@for f in lab/figures/LR-009/*.dot; do dot -Tsvg "$$f" -o "$${f%.dot}.svg" || exit 1; done

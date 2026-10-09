@@ -22,7 +22,7 @@ unmodified use) and reject GPL crates in MIT binaries.
 | `prost-build`, `protox` | 0.14.4 / 0.10.0 (build-dependencies since R-02) | Apache-2.0; MIT OR Apache-2.0 | compile `qrf.proto` at build time without a system `protoc` |
 | `bytes` | 1.12.1 (in use since R-02) | MIT | message frames |
 | `serde`, `serde_json` | 1.0.229 / 1.0.151 (in use since R-08 for the corpus sidecars and test vectors; `serde_json` brings `zmij` 1.0.23, `itoa`, `memchr`) | MIT OR Apache-2.0 | configuration files, JSON sidecars |
-| `memmap2`, `nix`, `libc` | 0.9.11 / 0.31.3 (`nix` in use since R-02 for CLOCK_TAI) / 0.2.190 | MIT OR Apache-2.0 | ring mmap and ioctls on `/dev/csi_stream0`; the two clocks of S-009-4 |
+| `memmap2`, `nix`, `libc` | 0.9.11 (not needed: `qrf-mipi` maps through `libc` directly) / 0.31.3 (`nix` in use since R-02 for CLOCK_TAI) / 0.2.190 (`libc` in use since R-03 for `ioctl`, `mmap`, `poll`, `clock_gettime`) | MIT OR Apache-2.0 | ring mmap and ioctls on `/dev/csi_stream0`; the two clocks of S-009-4 |
 | `gpiocdev`, `spidev`, `linux-embedded-hal` | 0.8.0 / 0.7.1 / 0.5.0 | MIT OR Apache-2.0 | GPIO and SPI for a HAT radio |
 | `sx1262` | 0.3.0 | per crate (verify) | SX1262 driver for a host-attached HAT or stick |
 | `lora-phy`, `embassy-rp` | 3.0.1 / 0.10.0 | MIT OR Apache-2.0 | Pico (RP2040) field-node firmware |
@@ -39,4 +39,4 @@ build that uses the crate; until then they are `[C]`. The R-02 build
 `thiserror`, `tokio` and `nix` with their transitive closure, and
 `cargo deny check` passed the allow-list on it. The R-08 build (2026-10-08)
 added `rustfft`, `num-complex`, `serde` and `serde_json` with theirs, and
-`cargo deny check` passed again.
+`cargo deny check` passed again. The R-03 build (2026-10-08) added `libc` as a direct dependency (it was already in the closure) and passed again.

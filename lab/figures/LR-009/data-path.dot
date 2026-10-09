@@ -1,0 +1,50 @@
+// LR-009 figure A: the receive data path from the tile to the consumers, with the
+// crate and process that owns each stage. Sizes from analysis T14; ring geometry
+// from SPEC-002 S-002-14 and the vendor driver's probe (LR-009 §IV.A).
+digraph datapath {
+  rankdir=TB; nodesep=0.3; ranksep=0.4; newrank=true;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#f4f4f1", color="#777777"];
+  edge [fontname="Helvetica", fontsize=9, color="#555555"];
+
+  subgraph cluster_tile {
+    label="QuadRF tile (vendor hardware; FPGA bitstream closed)"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    ant [label="4 patch elements\n4.9–6.0 GHz"];
+    rx  [label="MAX2851\n4 ch receiver\n8-bit I/Q"];
+    fpga [label="ECP5 FPGA\npacks CS8, elements\ninterleaved per sample"];
+    ant -> rx -> fpga;
+  }
+
+  subgraph cluster_kernel {
+    label="Pi 5: RP1 + vendor kernel module fpga-csi (GPL-2.0; rebuilt unmodified, separate from our code)"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    csi [label="RP1 CSI-2 receiver\n4 lanes × 700 Mbit/s\nRAW8 1024 B × 128 lines"];
+    dma [label="16 DMA buffers\n128 KiB each\nFREE→QUEUED→ACTIVE→COPY_PENDING"];
+    wq  [label="ordered copy workqueue\nmemcpy one span\nper frame end"];
+    ring [label="vmalloc ring 8 MiB\n63 spans × 128 KiB\n40 ms at 208 MB/s", fillcolor="#e3eefb"];
+    csi -> dma -> wq -> ring;
+  }
+
+  subgraph cluster_tiled {
+    label="qrf-tiled process (MIT; sole owner of /dev/csi_stream0 and /dev/dsi_stream0; backlog R-10)"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    reader [label="qrf-mipi::Reader\nmmap read-only\nGET_RING_INFO · poll · CONSUME_BYTES\nStamp (TAI, MONOTONIC_RAW)", fillcolor="#e3eefb"];
+    deint [label="qrf-mipi::deinterleave\nNEON vld4q_u16\n4 × CS8 element buffers", fillcolor="#e3eefb"];
+    loss [label="qrf-mipi::LossMonitor\nGET_STATS · GET_EVENTS\nonce per second", fillcolor="#e3eefb"];
+    memfd [label="memfd ring\nsequence-numbered\n(R-10)"];
+    jtag [label="qrf-jtag\nJTAG ioctls, lease\n(R-04)"];
+    reader -> deint -> memfd;
+    reader -> loss [style=dashed];
+  }
+
+  subgraph cluster_consumers {
+    label="consumers"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    dspd [label="qrf-dspd\nchanneliser M=128\nqrf-lora demodulator\n(R-07, done R-08)"];
+    bus [label="qrf-bus\nZeroMQ + protobuf\n(done R-02)"];
+    overlay [label="qrf-overlay\nWebSocket page\n(R-09)"];
+    dspd -> bus -> overlay;
+  }
+
+  fpga -> csi [label="CSI-2 FFC\n2.8 Gbit/s raw\n1.66 Gbit/s used"];
+  ring -> reader [label="mmap\nzero copy"];
+  memfd -> dspd [label="shared memory\n208 MB/s"];
+  jtag -> fpga [label="GPIO 14/15/18/23\nbit-banged JTAG", style=dashed, constraint=false];
+  loss -> bus [label="Health.loss_events", style=dashed, constraint=false];
+}

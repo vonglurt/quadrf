@@ -745,6 +745,12 @@ dependencies = [
 [[package]]
 name = "qrf-mipi"
 version = "0.1.0"
+dependencies = [
+ "libc",
+ "qrf-core",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "qrf-overlay"

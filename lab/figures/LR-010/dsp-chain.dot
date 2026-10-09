@@ -1,0 +1,46 @@
+// LR-010 figure: the qrf-dsp chain from a de-interleaved frame to the feed-bus
+// messages, with the module that owns each stage, its cost on this VM (the
+// R-07 60-s record) and the check that covers it. Rates from analysis T14, T25.
+digraph dspchain {
+  rankdir=LR; nodesep=0.25; ranksep=0.45; newrank=true;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#f4f4f1", color="#777777"];
+  edge [fontname="Helvetica", fontsize=9, color="#555555"];
+
+  frame [label="one CSI frame\n131 072 B · 630 µs\n4 elements interleaved\n(qrf-mipi::Reader)"];
+  deint [label="qrf-mipi::deinterleave\nNEON vld4q_u16\n4 × 16 384 CS8"];
+  conv  [label="qrf-dsp::convert\nCS8 → Complex<f32>\n× 1/128 (dBFS)\nonce per sample", fillcolor="#e3eefb"];
+
+  subgraph cluster_bank {
+    label="qrf-dsp::channeliser, one per element (S-008-6)"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    pfb [label="polyphase filter\nM = 128 branches × P = 8 taps\nKaiser-sinc prototype, Σh = 1\nscalar reference · NEON vfmaq_f32 ×4", fillcolor="#e3eefb"];
+    fft [label="128-point FFT\n(rustfft)\n1 output per bin\nper 4.92 µs block", fillcolor="#e3eefb"];
+    pfb -> fft;
+  }
+
+  subgraph cluster_det {
+    label="qrf-dsp::cfar (S-008-6; SPEC-003 S-003-8; T25)"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    psum [label="|X|² summed\nover 4 elements\nper bin per block"];
+    slots [label="SlotMap US-104\n250 kHz slots ← 203 kHz bins\n80 slots: 1 bin · 24 slots: 2 bins"];
+    cfar [label="CA-CFAR per slot\n203 blocks ≈ 1 ms per look\n16 training, 1 guard\nα from the ratio law,\nk_eff of the prototype\nPfa 1e-3", fillcolor="#e3eefb"];
+    duty [label="Duty window\n1 000 looks ≈ 1 s\n→ Occupancy {power_db, duty}"];
+    psum -> slots -> cfar -> duty;
+  }
+
+  subgraph cluster_bear {
+    label="per burst: qrf-dsp::bearing · qrf-dsp::music (S-008-6; S-009-8; T16)"; fontname="Helvetica-Bold"; fontsize=10; style="rounded"; color="#999999";
+    burst [label="one bin, 4 elements,\nN samples of a burst\n(the detector's slot)"];
+    pd [label="phase_difference\nΣ x_j x_i* over the 2 x pairs\nand the 2 y pairs → Δx, Δy\nθ = asin(|Δ|/kd), φ = atan2(Δy, Δx)\nσ from the pairs' coherence", fillcolor="#e3eefb"];
+    mu [label="Music\n4 × 4 covariance, Hermitian Jacobi\nnoise subspace, 1° grid,\n0.05° fine grid, parabolic step\nup to 3 sources", fillcolor="#e3eefb"];
+    bmsg [label="Bearing {θ, φ, σθ, σφ, snr}\n+ mounting → az/el (S-009-7)"];
+    burst -> pd -> bmsg;
+    burst -> mu -> bmsg;
+  }
+
+  frame -> deint -> conv -> pfb;
+  fft -> psum;
+  fft -> burst [style=dashed, label="selected slot's bin"];
+  duty -> occ [style=dashed];
+  bmsg -> bus [style=dashed];
+  occ [label="qrf-bus Occupancy\n(S-009-5; ≤ 10 Hz)", fillcolor="#fbeee3"];
+  bus [label="qrf-bus Bearing\n(S-009-5)", fillcolor="#fbeee3"];
+}

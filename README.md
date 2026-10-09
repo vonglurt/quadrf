@@ -30,7 +30,7 @@ of carried-forward facts into the next step. The design track is ledgered in
 | `specs/` | Clean-room specifications (SPEC-001…006, 011) and implementation specs (SPEC-007…010) |
 | `investigations/` | The gated sequence G00…G07, the gate ledger and the risk register |
 | `lab/` | Lab reports: audit, procedures, architecture, platform, receiver options, datasheet review, backlog review |
-| `analysis/` | The script that produces every derived number (T1–T24) |
+| `analysis/` | The script that produces every derived number (T1–T25) |
 | `crates/`, `Cargo.toml` | The qrf Cargo workspace; `qrf-analysis` is the byte-identical Rust port of the analysis |
 | `Makefile` | `make check` runs every linter, the analysis, the Rust build and the Rust/Python parity test |
 | `vendor/` | Licence ledger per upstream, own-words summaries of what we may not copy, public-domain CFR text |

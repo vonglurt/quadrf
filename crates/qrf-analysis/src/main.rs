@@ -74,6 +74,197 @@ fn mpe_distance_m(eirp_w: f64, s_limit_w_cm2: f64) -> f64 {
 }
 
 /// Half-power beamwidth of a 2-element broadside pair, isotropic elements.
+/// ln Γ(n) = ln((n−1)!) for integer n ≥ 1, from a cumulative table of logs (`lg_int` in the Python script).
+fn lg_int(n: usize) -> f64 {
+    thread_local! { static LG: std::cell::RefCell<Vec<f64>> = std::cell::RefCell::new(vec![0.0, 0.0]); }
+    LG.with(|t| {
+        let mut t = t.borrow_mut();
+        while t.len() <= n {
+            let v = t[t.len() - 1] + ((t.len() - 1) as f64).ln();
+            t.push(v);
+        }
+        t[n]
+    })
+}
+
+/// Continued fraction for the incomplete beta function (Numerical Recipes).
+fn betacf(a: f64, b: f64, x: f64) -> f64 {
+    let (qab, qap, qam) = (a + b, a + 1.0, a - 1.0);
+    let mut c = 1.0;
+    let mut d = 1.0 - qab * x / qap;
+    if d.abs() < 1e-300 {
+        d = 1e-300;
+    }
+    d = 1.0 / d;
+    let mut h = d;
+    for m in 1..=1000 {
+        let mf = m as f64;
+        let m2 = 2.0 * mf;
+        let mut aa = mf * (b - mf) * x / ((qam + m2) * (a + m2));
+        d = 1.0 + aa * d;
+        if d.abs() < 1e-300 {
+            d = 1e-300;
+        }
+        c = 1.0 + aa / c;
+        if c.abs() < 1e-300 {
+            c = 1e-300;
+        }
+        d = 1.0 / d;
+        h *= d * c;
+        aa = -(a + mf) * (qab + mf) * x / ((a + m2) * (qap + m2));
+        d = 1.0 + aa * d;
+        if d.abs() < 1e-300 {
+            d = 1e-300;
+        }
+        c = 1.0 + aa / c;
+        if c.abs() < 1e-300 {
+            c = 1e-300;
+        }
+        d = 1.0 / d;
+        let de = d * c;
+        h *= de;
+        if (de - 1.0).abs() < 3e-16 {
+            break;
+        }
+    }
+    h
+}
+
+/// Regularised incomplete beta I_x(a, b) for integer a, b.
+fn incbeta(a: usize, b: usize, x: f64) -> f64 {
+    if x <= 0.0 {
+        return 0.0;
+    }
+    if x >= 1.0 {
+        return 1.0;
+    }
+    let (af, bf) = (a as f64, b as f64);
+    let bt = (lg_int(a + b) - lg_int(a) - lg_int(b) + af * x.ln() + bf * (1.0 - x).ln()).exp();
+    if x < (af + 1.0) / (af + bf + 2.0) { bt * betacf(af, bf, x) / af } else { 1.0 - bt * betacf(bf, af, 1.0 - x) / bf }
+}
+
+/// CA-CFAR threshold over the training mean (ratio law): Pfa = I_{K/(K + αk)}(K, k), solved by bisection.
+fn cfar_alpha_ca(k: usize, kk: usize, pfa: f64) -> f64 {
+    let (mut lo, mut hi) = (1.0f64, 1000.0f64);
+    for _ in 0..100 {
+        let mid = (lo + hi) / 2.0;
+        if incbeta(kk, k, kk as f64 / (kk as f64 + mid * k as f64)) > pfa {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    (lo + hi) / 2.0
+}
+
+fn bessel_i0(x: f64) -> f64 {
+    let (mut s, mut t, q) = (1.0, 1.0, x * x / 4.0);
+    for k in 1..200 {
+        t *= q / (k as f64 * k as f64);
+        s += t;
+        if t < s * 1e-17 {
+            break;
+        }
+    }
+    s
+}
+
+/// Kaiser-windowed sinc, m·p taps, cutoff fs/(2m), unit DC gain (qrf-dsp `filter::prototype`).
+fn pfb_prototype(m: usize, p: usize, beta: f64) -> Vec<f64> {
+    let l = m * p;
+    let c = (l as f64 - 1.0) / 2.0;
+    let mut h = Vec::with_capacity(l);
+    for n in 0..l {
+        let x = (n as f64 - c) / m as f64;
+        let sinc = if x.abs() < 1e-12 { 1.0 } else { (PI * x).sin() / (PI * x) };
+        let r = 2.0 * n as f64 / (l as f64 - 1.0) - 1.0;
+        h.push(sinc * bessel_i0(beta * (1.0 - r * r).max(0.0).sqrt()) / bessel_i0(beta));
+    }
+    let tot: f64 = h.iter().sum();
+    h.iter().map(|v| v / tot).collect()
+}
+
+/// Independent looks equivalent to `n_avg` block outputs of `nbins` adjacent bins of a critically sampled PFB on white noise.
+fn pfb_effective_looks(h: &[f64], m: usize, p: usize, nbins: usize, n_avg: usize) -> f64 {
+    let e2: f64 = h.iter().map(|v| v * v).sum();
+    let mut tot = 0.0;
+    for dk in -(nbins as i64 - 1)..nbins as i64 {
+        let cnt = (nbins as i64 - dk.abs()) as f64;
+        for tau in -(p as i64 - 1)..p as i64 {
+            let (mut re, mut im) = (0.0f64, 0.0f64);
+            for n in 0..h.len() {
+                let j = n as i64 + tau * m as i64;
+                if j >= 0 && (j as usize) < h.len() {
+                    let a = 2.0 * PI * dk as f64 * n as f64 / m as f64;
+                    re += h[n] * h[j as usize] * a.cos();
+                    im += h[n] * h[j as usize] * a.sin();
+                }
+            }
+            tot += cnt * (n_avg as f64 - tau.abs() as f64) * (re * re + im * im) / (e2 * e2);
+        }
+    }
+    ((n_avg * nbins) as f64).powi(2) / tot
+}
+
+/// Regularised upper incomplete gamma Q(a, x) for integer a (Numerical Recipes gser/gcf); ln Gamma(a) as a sum of logs.
+fn gamma_q(a: i64, x: f64) -> f64 {
+    let af = a as f64;
+    let mut lg = 0.0;
+    for i in 1..a {
+        lg += (i as f64).ln();
+    }
+    let pre = (-x + af * x.ln() - lg).exp();
+    if x < af + 1.0 {
+        let (mut ap, mut s, mut d) = (af, 1.0 / af, 1.0 / af);
+        for _ in 0..500 {
+            ap += 1.0;
+            d *= x / ap;
+            s += d;
+            if d.abs() < s.abs() * 1e-15 {
+                break;
+            }
+        }
+        return 1.0 - s * pre;
+    }
+    let mut b = x + 1.0 - af;
+    let mut c = 1.0 / 1e-300;
+    let mut d = 1.0 / b;
+    let mut h = d;
+    for i in 1..500 {
+        let an = -(i as f64) * (i as f64 - af);
+        b += 2.0;
+        d = an * d + b;
+        if d.abs() < 1e-300 {
+            d = 1e-300;
+        }
+        c = b + an / c;
+        if c.abs() < 1e-300 {
+            c = 1e-300;
+        }
+        d = 1.0 / d;
+        let de = d * c;
+        h *= de;
+        if (de - 1.0).abs() < 1e-15 {
+            break;
+        }
+    }
+    pre * h
+}
+
+/// Threshold over the noise mean for a power averaged over k exponential looks: Q(k, k*alpha) = pfa, by bisection.
+fn cfar_alpha(k: i64, pfa: f64) -> f64 {
+    let (mut lo, mut hi) = (1.0f64, 1000.0f64);
+    for _ in 0..200 {
+        let mid = (lo + hi) / 2.0;
+        if gamma_q(k, k as f64 * mid) > pfa {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    (lo + hi) / 2.0
+}
+
 fn hpbw_2el_deg(d_over_lambda: f64) -> f64 {
     let x = (1.0 / 2f64.sqrt()).acos() / (PI * d_over_lambda);
     2.0 * x.min(1.0).asin().to_degrees()
@@ -490,4 +681,87 @@ fn main() {
         );
     }
     println!("  -> whole-band coherent capture (4 ch x 26 MSPS) never crosses the LAN; the fallback gives the whole band on two channels or half of it on all four (83 %, marginal), or a quarter of it on all four with margin: enough for bring-up (P-04), the register observation (R-04) and a bearing check on a CW source, not for the G05 criterion (5) load test");
-}
+
+    line();
+    println!("T25 Channeliser and detector design for qrf-dsp (backlog R-07): M=128 bins over 26 MHz, P=8 taps, 104 slots of 250 kHz, CA-CFAR [D]");
+    let (m, p) = (128i64, 8i64);
+    let fs = 26e6f64;
+    let bin_hz = fs / m as f64;
+    println!(
+        "  bin width {:7.3} kHz; slot width 250 kHz = {:5.3} bins; block of M samples = {:5.3} us; {:7.3} k blocks/s per channel",
+        bin_hz / 1e3,
+        250e3 / bin_hz,
+        m as f64 / fs * 1e6,
+        fs / m as f64 / 1e3
+    );
+    // slot i centre: 902.125 + 0.25 i MHz (S-003-8: 104 slots, slot 20 at 906.875); capture centred on 915 MHz, bin k centre at k*bin_hz
+    let mut counts: std::collections::BTreeMap<i64, i64> = std::collections::BTreeMap::new();
+    for i in 0..104i64 {
+        let lo = (902.125 + 0.25 * i as f64 - 0.125 - 915.0) * 1e6;
+        let hi = lo + 250e3;
+        let n = (-m / 2..m / 2).filter(|&k| lo <= k as f64 * bin_hz && k as f64 * bin_hz < hi).count() as i64;
+        *counts.entry(n).or_insert(0) += 1;
+    }
+    let parts: Vec<String> = counts.iter().map(|(n, c)| format!("{c} slots with {n} bin{}", if *n != 1 { "s" } else { "" })).collect();
+    println!("  bins whose centre falls in a slot: {}; every slot has >= 1 (S-008-6)", parts.join(", "));
+    let l = m * p;
+    let beta = 0.1102 * (60.0 - 8.7); // Kaiser beta for 60 dB sidelobes
+    println!(
+        "  prototype low-pass: windowed sinc, L = M*P = {l} taps, cutoff fs/(2M), Kaiser beta {beta:5.3} (60 dB sidelobes); main-lobe half-width ~ (beta^2+pi^2)^0.5/(pi*L) = {:5.3} bins",
+        (beta * beta + PI * PI).sqrt() / (PI * l as f64) * m as f64
+    );
+    let n16 = 16i64;
+    let a16 = n16 as f64 * (1e-3f64.powf(-1.0 / n16 as f64) - 1.0);
+    println!(
+        "  CA-CFAR, {n16} training slots of one look, Pfa 1e-03: alpha = {a16:6.3} = {:5.2} dB over the training mean (closed form N (Pfa^(-1/N) - 1); the ratio law below gives {:6.3})",
+        db(a16),
+        cfar_alpha_ca(1, 16, 1e-3)
+    );
+    for pfa in [1e-3f64, 1e-4] {
+        let parts: Vec<String> = [1i64, 32, 203, 406].iter().map(|&k| { let a = cfar_alpha(k, pfa); format!("k={k:3}: {a:6.3} ({:5.2} dB)", db(a)) }).collect();
+        println!("  CA-CFAR, slot power averaged over k looks, training mean taken as exact (N*k >> k), Pfa {}: {}", pye(pfa, 0), parts.join("; "));
+    }
+    println!("  one look = one block of M samples; 203 blocks = {:5.3} ms, the detector's look; a 2-bin slot averages 406", 203.0 * m as f64 / fs * 1e3);
+    let h = pfb_prototype(m as usize, p as usize, beta);
+    let keff = [0.0, pfb_effective_looks(&h, m as usize, p as usize, 1, 203), pfb_effective_looks(&h, m as usize, p as usize, 2, 203)];
+    let lag1: f64 = (0..h.len() - m as usize).map(|n| h[n] * h[n + m as usize]).sum::<f64>().powi(2) / h.iter().map(|v| v * v).sum::<f64>().powi(2);
+    println!(
+        "  block outputs of one bin are correlated through the prototype (lag-1 |rho|^2 = {lag1:5.3}) and adjacent bins overlap: 203 outputs of a 1-bin slot = {:6.1} independent looks, 406 of a 2-bin slot = {:6.1}",
+        keff[1], keff[2]
+    );
+    let nb: Vec<usize> = (0..104i64)
+        .map(|i| {
+            let lo = (902.125 + 0.25 * i as f64 - 0.125 - 915.0) * 1e6;
+            (-m / 2..m / 2).filter(|&k| lo <= k as f64 * bin_hz && k as f64 * bin_hz < lo + 250e3).count()
+        })
+        .collect();
+    let train_shape = |i: usize| -> (usize, f64) {
+        let (guard, half) = (1usize, 8usize);
+        let cells: Vec<usize> = (i.saturating_sub(guard + half)..i.saturating_sub(guard)).chain((i + guard + 1).min(104)..(i + guard + half + 1).min(104)).collect();
+        let n = cells.len();
+        (n, (n * n) as f64 / cells.iter().map(|&j| 1.0 / keff[nb[j]]).sum::<f64>())
+    };
+    let two = (20..80).find(|&i| nb[i] == 2).unwrap();
+    let parts: Vec<String> = [("interior 1-bin slot 50", 50usize), ("interior 2-bin slot", two), ("edge slot 0", 0)]
+        .iter()
+        .map(|&(label, i)| {
+            let (n, kk) = train_shape(i);
+            let k = keff[nb[i]].round() as usize;
+            let a = cfar_alpha_ca(k, kk.round() as usize, 1e-3);
+            format!("{label} (k={k}, {n} training cells, K={kk:6.0}): alpha {a:5.3} ({:4.2} dB)", db(a))
+        })
+        .collect();
+    println!("  the detector's threshold accounts for both the cell's looks and the training mean's spread (ratio law, Pfa 1e-03): {}", parts.join("; "));
+    let kd = 2.0 * PI * 0.5;
+    for (n, snr_db) in [(1024i64, 20i64), (4096, 20), (1024, 10)] {
+        let s2 = 1.0 / (n as f64 * lin(snr_db as f64)).sqrt() / kd;
+        println!(
+            "  CRLB sigma at broadside, half-wave pitch, N={n:5}, SNR {snr_db:2} dB: one pair {:6.3} deg; two parallel pairs of a 2x2 square averaged {:6.3} deg (T16 formula)",
+            s2.to_degrees(),
+            (s2 / 2f64.sqrt()).to_degrees()
+        );
+    }
+    println!(
+        "  R-07 function check: bearing error (rms over trials) <= 0.1 deg at 20 dB SNR and N=1024 against the one-pair bound {:5.3} deg; a tone at a bin centre through the channeliser within 0.1 dB of its input power",
+        (1.0 / (1024.0 * lin(20.0)).sqrt() / kd).to_degrees()
+    );}

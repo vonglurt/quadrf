@@ -49,7 +49,7 @@ must deliver is in the spec statement it names.
 | F | field tools, nodes, firmware, field tests | `investigations/G07`, `investigations/records/` |
 | S | system-level tests | `investigations/records/` |
 
-**Standing:** 57 open · 0 in progress · 20 done · 0 dropped. Written 2026-10-08; re-sequenced 2026-10-08 (LR-007).
+**Standing:** 56 open · 1 in progress · 20 done · 0 dropped. Written 2026-10-08; re-sequenced 2026-10-08 (LR-007).
 
 ---
 
@@ -75,7 +75,6 @@ must deliver is in the spec statement it names.
 
 | ID | Entry | Rule / gate | Check |
 | --- | --- | --- | --- |
-| R-07 | `qrf-dsp`: polyphase channeliser (M = 128, P = 8), CFAR detector, two-element phase-difference bearing, 4 × 4 covariance + MUSIC; criterion benchmarks | SPEC-008 S-008-6; T16, T19 | Function, on the VM: bearing error on simulated plane waves ≤ 0.1° at 20 dB SNR (T16 bound 0.057°); a tone's power through the channeliser within 0.1 dB of its input. Budget, on a Pi 5 running copal (any Pi 5, no tile; the VM's cores are not a proxy for the A76, LR-007 §IV): 4 ch × 26 MSPS channeliser ≤ 0.8 core from `/proc/<pid>/stat` over 60 s, filed as an `M-nnn` record; the VM figure recorded beside it for reference only |
 | R-09 | `qrf-overlay`: static page + WebSocket; layers for scatter, bearing rays with σ wedges, 104-slot occupancy strip, frame log, health | SPEC-008 S-008-8 | With simulated feeds, all layers render at the declared rates in a browser on the VM; CPU of the server ≤ 0.1 core |
 | R-02b | `qrf-sensord` supervisor with `nusb` hot-plug and a TOML sensor declaration; conformance test harness | SPEC-009 S-009-1/2/12 | A dummy USB device (or a simulated plug-in) passes the 10-cycle unplug/replug test |
 | R-06 | ZeroMQ interoperability: the native `zeromq` crate against `pyzmq` (installed on the VM) and against a GNU Radio ZMQ SUB source block from the V-08 install | U-008-3 | 10 000 messages each way with each peer, none lost or reordered |
@@ -158,7 +157,7 @@ must deliver is in the spec statement it names.
 
 | ID | Entry | Rule / gate | Where it stands |
 | --- | --- | --- | --- |
-| | *nothing* | | |
+| R-07 | `qrf-dsp`: polyphase channeliser (M = 128, P = 8), CFAR detector, two-element phase-difference bearing, 4 × 4 covariance + MUSIC; criterion benchmarks | SPEC-008 S-008-6; T16, T19, T25 | **Function check passed on the VM 2026-10-08** (`make dsp-check`, `lab/LR-010`): a tone at a bin centre passes at 0.0000 dB (bound 0.1 dB); phase-difference bearing rms 0.058° and MUSIC 0.068° at 20 dB SNR, N = 1024, on a half-wave 2 × 2 (bound 0.1°; T16 one-pair CRLB 0.057°); CA-CFAR false-alarm rate 9.3 × 10⁻⁴ at a design 10⁻³ once the threshold uses the prototype's effective looks and the ratio law (T25); the mock tile through the whole chain at the T14 cadence with the consumer thread at 0.36 core and the four channelisers at 0.29 core on this VM. **Budget check waits for a Pi 5** (D-09 row): 4 ch × 26 MSPS channeliser ≤ 0.8 core from `/proc/<pid>/stat` over 60 s on copal, filed as an `M-nnn` record; the VM figure is beside it for reference only (LR-007 §IV). `crates/qrf-dsp` (`channeliser`, `cfar`, `bearing`, `music`, `array`, `filter`, `stat`, `convert`), 23 tests, `tests/r07_soak.rs` (3 s), `examples/dsp_soak.rs` (the record), `benches/dsp.rs` (criterion) |
 
 ## Done
 

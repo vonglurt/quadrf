@@ -3,7 +3,7 @@
 
 Every number quoted in investigations/, specs/, lab/ and backlog.md that is
 marked [D] (derived) is produced here. Run:  python3 analysis/linkbudget.py
-No third-party dependencies. Tables are numbered T1…T24 and cited by number.
+No third-party dependencies. Tables are numbered T1…T25 and cited by number.
 
 Inputs marked [S] in comments are sourced values (vendor documents, datasheets
 in resources/datasheets/, CFR text); inputs marked [C] are placeholders that a
@@ -54,6 +54,154 @@ def radio_horizon_km(h1_m, h2_m):
 
 def mpe_distance_m(eirp_w, s_limit_w_cm2):
     return math.sqrt(eirp_w / (4*math.pi*s_limit_w_cm2)) / 100.0
+
+def bessel_i0(x):
+    s, t, q = 1.0, 1.0, x*x/4
+    for k in range(1, 200):
+        t *= q/(k*k)
+        s += t
+        if t < s*1e-17:
+            break
+    return s
+
+def pfb_prototype(m, p, beta):
+    """Kaiser-windowed sinc, m*p taps, cutoff fs/(2m), unit DC gain (qrf-dsp filter::prototype)."""
+    L = m*p
+    c = (L - 1)/2
+    h = []
+    for n in range(L):
+        x = (n - c)/m
+        sinc = 1.0 if abs(x) < 1e-12 else math.sin(math.pi*x)/(math.pi*x)
+        r = 2*n/(L - 1) - 1
+        h.append(sinc*bessel_i0(beta*math.sqrt(max(0.0, 1 - r*r)))/bessel_i0(beta))
+    tot = sum(h)
+    return [v/tot for v in h]
+
+def pfb_effective_looks(h, m, p, nbins, n_avg):
+    """Independent looks equivalent to n_avg block outputs of nbins adjacent bins of a critically sampled PFB on white noise:
+    (n_avg*nbins)^2 / sum over bin pairs and block lags of (n_avg-|tau|) |rho|^2, rho(dk, tau) = sum_n h[n] h[n+tau m] e^{j 2 pi dk n/m} / sum h^2."""
+    e2 = sum(v*v for v in h)
+    tot = 0.0
+    for dk in range(-(nbins - 1), nbins):
+        cnt = nbins - abs(dk)
+        for tau in range(-(p - 1), p):
+            re = im = 0.0
+            for n in range(len(h)):
+                j = n + tau*m
+                if 0 <= j < len(h):
+                    a = 2*math.pi*dk*n/m
+                    re += h[n]*h[j]*math.cos(a)
+                    im += h[n]*h[j]*math.sin(a)
+            tot += cnt*(n_avg - abs(tau))*(re*re + im*im)/(e2*e2)
+    return (n_avg*nbins)**2/tot
+
+_LG = [0.0, 0.0]
+def lg_int(n):
+    """ln Gamma(n) = ln((n-1)!) for integer n >= 1, from a cumulative table of logs."""
+    while len(_LG) <= n:
+        _LG.append(_LG[-1] + math.log(len(_LG) - 1))
+    return _LG[n]
+
+def betacf(a, b, x):
+    """Continued fraction for the incomplete beta function (Numerical Recipes)."""
+    qab, qap, qam = a + b, a + 1, a - 1
+    c = 1.0
+    d = 1 - qab*x/qap
+    if abs(d) < 1e-300:
+        d = 1e-300
+    d = 1/d
+    h = d
+    for m in range(1, 1001):
+        m2 = 2*m
+        aa = m*(b - m)*x/((qam + m2)*(a + m2))
+        d = 1 + aa*d
+        if abs(d) < 1e-300:
+            d = 1e-300
+        c = 1 + aa/c
+        if abs(c) < 1e-300:
+            c = 1e-300
+        d = 1/d
+        h *= d*c
+        aa = -(a + m)*(qab + m)*x/((a + m2)*(qap + m2))
+        d = 1 + aa*d
+        if abs(d) < 1e-300:
+            d = 1e-300
+        c = 1 + aa/c
+        if abs(c) < 1e-300:
+            c = 1e-300
+        d = 1/d
+        de = d*c
+        h *= de
+        if abs(de - 1) < 3e-16:
+            break
+    return h
+
+def incbeta(a, b, x):
+    """Regularised incomplete beta I_x(a, b) for integer a, b."""
+    if x <= 0:
+        return 0.0
+    if x >= 1:
+        return 1.0
+    bt = math.exp(lg_int(a + b) - lg_int(a) - lg_int(b) + a*math.log(x) + b*math.log(1 - x))
+    if x < (a + 1)/(a + b + 2):
+        return bt*betacf(a, b, x)/a
+    return 1 - bt*betacf(b, a, 1 - x)/b
+
+def cfar_alpha_ca(k, K, pfa):
+    """CA-CFAR threshold over the training mean: the cell under test averages k exponential looks, the training mean is Gamma with
+    shape K (K = N k for N equal cells); Pfa = P(Gamma(k)/k > alpha Gamma(K)/K) = I_{K/(K + alpha k)}(K, k); solved by bisection."""
+    lo, hi = 1.0, 1000.0
+    for _ in range(100):
+        mid = (lo + hi)/2
+        if incbeta(K, k, K/(K + mid*k)) > pfa:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi)/2
+
+def gamma_q(a, x):
+    """Regularised upper incomplete gamma Q(a, x) for integer a (Numerical Recipes gser/gcf); ln Gamma(a) as a sum of logs."""
+    lg = sum(math.log(i) for i in range(1, int(a)))
+    pre = math.exp(-x + a*math.log(x) - lg)
+    if x < a + 1:
+        ap, s, d = a, 1/a, 1/a
+        for _ in range(500):
+            ap += 1
+            d *= x/ap
+            s += d
+            if abs(d) < abs(s)*1e-15:
+                break
+        return 1 - s*pre
+    b = x + 1 - a
+    c = 1/1e-300
+    d = 1/b
+    h = d
+    for i in range(1, 500):
+        an = -i*(i - a)
+        b += 2
+        d = an*d + b
+        if abs(d) < 1e-300:
+            d = 1e-300
+        c = b + an/c
+        if abs(c) < 1e-300:
+            c = 1e-300
+        d = 1/d
+        de = d*c
+        h *= de
+        if abs(de - 1) < 1e-15:
+            break
+    return pre*h
+
+def cfar_alpha(k, pfa):
+    """Threshold over the noise mean for a power averaged over k exponential looks: Q(k, k*alpha) = pfa, by bisection."""
+    lo, hi = 1.0, 1000.0
+    for _ in range(200):
+        mid = (lo + hi)/2
+        if gamma_q(k, k*mid) > pfa:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi)/2
 
 def hpbw_2el_deg(d_over_lambda):
     """Half-power beamwidth of a 2-element broadside pair, isotropic elements."""
@@ -282,3 +430,51 @@ if __name__ == "__main__":
         fits = "fits" if bps <= EFF*GBE else "does not fit"
         print(f"  {label:30} CS8 {bps/1e9:5.2f} Gbit/s = {100*bps/GBE:4.0f} % of line rate; band seen per channel {rate/1e6:5.1f} MHz = {rate/250e3:4.0f} of the 104 slots; {fits}")
     print("  -> whole-band coherent capture (4 ch x 26 MSPS) never crosses the LAN; the fallback gives the whole band on two channels or half of it on all four (83 %, marginal), or a quarter of it on all four with margin: enough for bring-up (P-04), the register observation (R-04) and a bearing check on a CW source, not for the G05 criterion (5) load test")
+    line()
+    print("T25 Channeliser and detector design for qrf-dsp (backlog R-07): M=128 bins over 26 MHz, P=8 taps, 104 slots of 250 kHz, CA-CFAR [D]")
+    M, P = 128, 8
+    FS = 26e6
+    bin_hz = FS/M
+    print(f"  bin width {bin_hz/1e3:7.3f} kHz; slot width 250 kHz = {250e3/bin_hz:5.3f} bins; block of M samples = {M/FS*1e6:5.3f} us; {FS/M/1e3:7.3f} k blocks/s per channel")
+    # slot i centre: 902.125 + 0.25 i MHz (S-003-8: 104 slots, slot 20 at 906.875); capture centred on 915 MHz, bin k centre at k*bin_hz
+    counts = {}
+    for i in range(104):
+        lo = (902.125 + 0.25*i - 0.125 - 915.0)*1e6
+        hi = lo + 250e3
+        n = sum(1 for k in range(-M//2, M//2) if lo <= k*bin_hz < hi)
+        counts[n] = counts.get(n, 0) + 1
+    print(f"  bins whose centre falls in a slot: {', '.join(f'{counts[n]} slots with {n} bin' + ('s' if n != 1 else '') for n in sorted(counts))}; every slot has >= 1 (S-008-6)")
+    L = M*P
+    beta = 0.1102*(60-8.7)                   # Kaiser beta for 60 dB sidelobes
+    print(f"  prototype low-pass: windowed sinc, L = M*P = {L} taps, cutoff fs/(2M), Kaiser beta {beta:5.3f} (60 dB sidelobes); main-lobe half-width ~ (beta^2+pi^2)^0.5/(pi*L) = {math.sqrt(beta**2+math.pi**2)/(math.pi*L)*M:5.3f} bins")
+    n16 = 16
+    print(f"  CA-CFAR, {n16} training slots of one look, Pfa 1e-03: alpha = {n16*(1e-3**(-1/n16) - 1):6.3f} = {db(n16*(1e-3**(-1/n16) - 1)):5.2f} dB over the training mean (closed form N (Pfa^(-1/N) - 1); the ratio law below gives {cfar_alpha_ca(1, 16, 1e-3):6.3f})")
+    for pfa in (1e-3, 1e-4):
+        parts = []
+        for k in (1, 32, 203, 406):
+            a = cfar_alpha(k, pfa)
+            parts.append(f"k={k:3}: {a:6.3f} ({db(a):5.2f} dB)")
+        print(f"  CA-CFAR, slot power averaged over k looks, training mean taken as exact (N*k >> k), Pfa {pfa:.0e}: {'; '.join(parts)}")
+    print(f"  one look = one block of M samples; 203 blocks = {203*M/FS*1e3:5.3f} ms, the detector's look; a 2-bin slot averages 406")
+    h = pfb_prototype(M, P, beta)
+    keff = {nb: pfb_effective_looks(h, M, P, nb, 203) for nb in (1, 2)}
+    print(f"  block outputs of one bin are correlated through the prototype (lag-1 |rho|^2 = {sum(h[n]*h[n+M] for n in range(len(h)-M))**2/sum(v*v for v in h)**2:5.3f}) and adjacent bins overlap: 203 outputs of a 1-bin slot = {keff[1]:6.1f} independent looks, 406 of a 2-bin slot = {keff[2]:6.1f}")
+    nb = []
+    for i in range(104):
+        lo = (902.125 + 0.25*i - 0.125 - 915.0)*1e6
+        nb.append(sum(1 for k in range(-M//2, M//2) if lo <= k*bin_hz < lo + 250e3))
+    def train_shape(i, guard=1, half=8):
+        cells = [j for j in list(range(max(0, i - guard - half), max(0, i - guard))) + list(range(min(104, i + guard + 1), min(104, i + guard + half + 1)))]
+        return len(cells), len(cells)**2/sum(1/keff[nb[j]] for j in cells)
+    parts = []
+    for label, i in (("interior 1-bin slot 50", 50), ("interior 2-bin slot", next(i for i in range(20, 80) if nb[i] == 2)), ("edge slot 0", 0)):
+        N, K = train_shape(i)
+        k = int(round(keff[nb[i]]))
+        a = cfar_alpha_ca(k, int(round(K)), 1e-3)
+        parts.append(f"{label} (k={k}, {N} training cells, K={K:6.0f}): alpha {a:5.3f} ({db(a):4.2f} dB)")
+    print(f"  the detector's threshold accounts for both the cell's looks and the training mean's spread (ratio law, Pfa 1e-03): {'; '.join(parts)}")
+    kd = 2*math.pi*0.5
+    for n, snr_db in ((1024, 20), (4096, 20), (1024, 10)):
+        s2 = 1/math.sqrt(n*lin(snr_db))/kd
+        print(f"  CRLB sigma at broadside, half-wave pitch, N={n:5}, SNR {snr_db:2} dB: one pair {math.degrees(s2):6.3f} deg; two parallel pairs of a 2x2 square averaged {math.degrees(s2/math.sqrt(2)):6.3f} deg (T16 formula)")
+    print(f"  R-07 function check: bearing error (rms over trials) <= 0.1 deg at 20 dB SNR and N=1024 against the one-pair bound {math.degrees(1/math.sqrt(1024*lin(20))/kd):5.3f} deg; a tone at a bin centre through the channeliser within 0.1 dB of its input power")

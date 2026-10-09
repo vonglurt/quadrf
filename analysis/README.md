@@ -6,7 +6,7 @@
 python3 analysis/linkbudget.py
 ```
 
-Tables are numbered T1…T24 and are referenced by that number from the
+Tables are numbered T1…T25 and are referenced by that number from the
 investigations, specs and lab reports. No third-party dependencies.
 
 | Table | Content | Cited by |
@@ -35,6 +35,7 @@ investigations, specs and lab reports. No third-party dependencies.
 | T22 | MAX2871 translator-LO phase noise and spurs vs the tile LO | SPEC-007 rev 1, G05 addendum |
 | T23 | SX1261/2 datasheet sensitivities vs the T1 model, implied NF, offset tolerances | SPEC-003 rev 2, G05 addendum |
 | T24 | SoapyRemote fallback: CS8 stream rates vs the Pi 5 Gigabit Ethernet payload capacity | backlog P-03b, LR-007 |
+| T25 | Channeliser and detector design: bin width, slot-to-bin map, prototype filter, CA-CFAR thresholds, CRLB for the 2 × 2 square; the R-07 function-check bounds | SPEC-008 S-008-6, backlog R-07, LR-010 |
 
 The Rust port of these tables is `crates/qrf-analysis` (backlog A-02, done
 2026-10-08); `make parity` checks that it prints exactly this script's output.

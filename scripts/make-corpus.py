@@ -83,7 +83,7 @@ def cell_table():
         cells.append((f"r08_{preset}_snr{snr:+.1f}", preset, snr, "r08"))
     return cells
 
-def select_cells(spec):
+def select_cells(spec, out_dir=None):
     table = cell_table()
     if spec in ("all", None):
         return table
@@ -94,6 +94,15 @@ def select_cells(spec):
     wanted = set(spec.split(","))
     chosen = [c for c in table if c[0] in wanted]
     missing = wanted - {c[0] for c in chosen}
+    if missing and out_dir is not None:
+        # A cell that is not in the table but exists under --out with a truth.json (for example one made by
+        # crates/qrf-lora/examples/make_cell.rs) can still be verified; its parameters come from the sidecar.
+        for name in sorted(missing):
+            tr = out_dir / name / "truth.json"
+            if tr.exists():
+                t = json.loads(tr.read_text())
+                chosen.append((name, t["preset"], float(t["snr_db_in_bandwidth"]), "external"))
+                missing.discard(name)
     if missing:
         sys.exit(f"unknown cells: {sorted(missing)}; see `list`")
     return chosen
@@ -463,11 +472,13 @@ def main():
 
     ctx = load_oracle()
     table = cell_table()
-    chosen = select_cells(a.cells)
+    chosen = select_cells(a.cells, a.out)
     a.out.mkdir(parents=True, exist_ok=True)
     names = []
     for name, preset, snr, kind in chosen:
-        idx = [c[0] for c in table].index(name)
+        idx = [c[0] for c in table].index(name) if kind != "external" else 0
+        if kind == "external" and a.command == "generate":
+            sys.exit(f"{name}: not a table cell; only `verify` applies to external cells")
         if a.command == "generate":
             n = a.frames_r08 if kind == "r08" else a.frames
             t0 = time.monotonic()

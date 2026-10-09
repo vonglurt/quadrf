@@ -2,7 +2,7 @@
 PY := python3 -I
 TMP := $(shell mktemp -d 2>/dev/null || echo /tmp/quadrf-make)
 
-.PHONY: check lint links cites analysis sh-syntax rust parity deny audit vendor-cfr fetch import oracle corpus corpus-check clean
+.PHONY: check lint links cites analysis sh-syntax rust parity deny audit vendor-cfr fetch import oracle corpus corpus-check lora-vectors lora-check lora-oracle-check clean
 
 ## check: everything that must pass before a commit
 check: lint links cites analysis sh-syntax rust parity deny
@@ -69,3 +69,23 @@ corpus-check:
 
 clean:
 	rm -rf target
+
+## lora-vectors: the oracle transmitter's stage outputs that fix qrf-lora's coding conventions (needs `make oracle`); the copy under crates/ is what the test reads
+lora-vectors:
+	$(PY) scripts/oracle-vectors.py
+	cp resources/vectors/lora-tx-vectors.json crates/qrf-lora/tests/data/lora-tx-vectors.json
+
+## lora-check: backlog R-08, demodulator half: every corpus cell through qrf-lora, PER beside the oracle's (needs `make corpus`)
+lora-check:
+	cargo build --locked --release -p qrf-lora --examples
+	./target/release/examples/corpus_check resources/corpus/qrf-lora-v1 --json resources/corpus/qrf-lora-v1/qrf-lora-results.json
+
+## lora-oracle-check: backlog R-08, modulator half: cells synthesised by qrf-lora's modulator, decoded by the oracle receiver (needs `make oracle`; idle machine)
+LORA_RS := resources/corpus/qrf-lora-rs
+lora-oracle-check:
+	cargo build --locked --release -p qrf-lora --examples
+	@rm -rf $(LORA_RS)
+	@for p in SHORT_TURBO SHORT_FAST MEDIUM_FAST LONG_TURBO LONG_FAST LONG_MODERATE LONG_SLOW; do \
+	  ./target/release/examples/make_cell $(LORA_RS) --preset $$p --snr 0 --frames 50 --seed 20261008 || exit 1; done
+	$(PY) scripts/make-corpus.py verify --out $(LORA_RS) --cells $$(ls $(LORA_RS) | tr '\n' ',' | sed 's/,$$//')
+	./target/release/examples/corpus_check $(LORA_RS)

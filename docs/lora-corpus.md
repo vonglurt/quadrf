@@ -133,3 +133,24 @@ every preset. `[D]` (the table) The R-08 check cells give the reference
 `MANIFEST.json` sha256 `4cce02e671b2399a7c2b7b89ab5736076adca38790a13e960ae414a56502803d`
 (also in `docs/resources-manifest.md`). `[M]` (`make corpus-check`, 2026-10-08)
 
+## 6. `qrf-lora` against the corpus (backlog R-08)
+
+The receiver and modulator of `crates/qrf-lora` were checked against this
+corpus and this oracle on 2026-10-08; the method, the coding conventions the
+oracle's stage vectors fixed, the receiver design and the full per-cell table
+are in `lab/LR-008-qrf-lora-modem.md`. `[D]`
+
+| Check | Result |
+| --- | --- |
+| `r08_SHORT_TURBO_snr-5.0`, 1 000 frames | qrf-lora 935 correct (PER 0.065); oracle 930 (0.070) |
+| `r08_LONG_FAST_snr-15.0`, 1 000 frames | qrf-lora 988 correct (PER 0.012); oracle 947 (0.053) |
+| All 37 cells, 5500 frames | qrf-lora 4091 correct, oracle 3761; qrf-lora decodes at least as many frames as the oracle in every cell |
+| CRC verdicts | 0 of 5500 frames with a `crc_ok` verdict that disagrees with the CRC recomputed over the delivered payload; 1 CRC collision (`LONG_FAST_snr-20.0` index 48: the same bit flipped in the last payload byte and in the low CRC byte, which the LoRa CRC construction cannot see; LR-008 §4) |
+| Modulator in the oracle | 7 cells × 50 frames at 0 dB in BW (`resources/corpus/qrf-lora-rs/`): the oracle decodes 336 of 350, no wrong payload, every cell repeatable; qrf-lora decodes all 350 |
+
+`[M]` (`make lora-check`, `make lora-oracle-check`, 2026-10-08; `resources/corpus/qrf-lora-v1/qrf-lora-results.json`, `resources/corpus/qrf-lora-rs/*/oracle.json`)
+
+The oracle's stage vectors that fixed `qrf-lora`'s coding conventions come
+from `scripts/oracle-vectors.py` (`make lora-vectors`); the committed copy
+`crates/qrf-lora/tests/data/lora-tx-vectors.json` is program output of the
+oracle, not its code, and `tests/r08_vectors.rs` holds the encoder to it. `[D]`

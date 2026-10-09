@@ -78,12 +78,14 @@ secure. The extension does not change the gates; it adds a design track.
 | Path | Content |
 | --- | --- |
 | [`analysis/linkbudget.py`](analysis/linkbudget.py) ([README](analysis/README.md)) | Every `[D]` number, tables T1–T24 |
-| [`crates/README.md`](crates/README.md) | The qrf Cargo workspace: `qrf-analysis` (byte-identical Rust port of the analysis, done) and the crates to come |
+| [`crates/README.md`](crates/README.md) | The qrf Cargo workspace: `qrf-analysis` (byte-identical Rust port of the analysis), `qrf-bus` (the qrf.v1 feed bus, R-02 done), `qrf-core` time base, and the crates to come |
 | [`Makefile`](Makefile) | `make check`: tag linter, link and citation checks, analysis, shell syntax, Rust build and test, Rust/Python parity, cargo-deny when installed |
 | [`docs/resources-manifest.md`](docs/resources-manifest.md) | What is in gitignored `resources/`, from where, when, which commit, which sha256 |
 | [`vendor/README.md`](vendor/README.md) | Licence classes and the rule for each; per-upstream `ATTRIBUTION.md` under `vendor/<source>/` |
 | [`vendor/summary/README.md`](vendor/summary/README.md) | Own-words restatements of everything we may not copy (datasheets, GPL code, CC BY-SA files, vendor pages) |
 | [`vendor/cfr47/README.md`](vendor/cfr47/README.md) | Public-domain text of the fourteen 47 CFR sections we rely on |
+| [`docs/lora-corpus.md`](docs/lora-corpus.md) | The LoRa I/Q test corpus and its oracle (`gr-lora_sdr`, a separate GPL process): conventions, layout, the oracle's measured limits, per-cell results (backlog V-08) |
+| [`scripts/build-oracle.sh`](scripts/build-oracle.sh), [`scripts/make-corpus.py`](scripts/make-corpus.py) | `make oracle` builds the oracle into gitignored `resources/oracle/`; `make corpus` generates and verifies the corpus; `make corpus-check` compares every file with its manifest |
 | [`scripts/fetch-resources.sh`](scripts/fetch-resources.sh) | Re-creates `resources/` (everything fetchable by script) |
 | [`scripts/import-shared.sh`](scripts/import-shared.sh) | Imports datasheets dropped in `~/Downloads/SharedVM/quadrf/` by part number with sha256 |
 | [`scripts/vendor-cfr.py`](scripts/vendor-cfr.py) | Regenerates `vendor/cfr47/` from the LII pages |
@@ -126,6 +128,6 @@ signed.
 ## State on 2026-10-08
 
 - Gates: G00–G04 PASS; G05 and G06 OPEN on bench work; G07 DRAFT.
-- Backlog: 61 open (0 in progress), 16 done, 0 dropped; re-sequenced 2026-10-08 (LR-007): P0 (standing: ledger, the Part 97 decision, procurement, field work with the nodes in hand) and P1 (Rust workspace with simulated feeds, the critical path) run now; P2 (field tools) follows R-P1 and the purchases; P3 onward wait for the kit.
+- Backlog: 59 open (0 in progress), 18 done (R-02 the feed bus and V-08 the LoRa test oracle and corpus, both 2026-10-08), 0 dropped; re-sequenced 2026-10-08 (LR-007): P0 (standing: ledger, the Part 97 decision, procurement, field work with the nodes in hand) and P1 (Rust workspace with simulated feeds, the critical path) run now; P2 (field tools) follows R-P1 and the purchases; P3 onward wait for the kit.
 - Sources in hand: vendor repository at commit `8b61ae5`, schematic export 2026-05-22, MAX2850, MAX2851, MAX2871, SKY65404-31, SE5004L-EK1, SX1261/2 and RP1 datasheets, fourteen CFR sections, KrakenSDR documentation, Meshtastic firmware at `364a111`, `quadrf-mesh` at `ad3ed31`. Missing: the SE5004L device data sheet (DST-00316, for saturated power) and a current SX1261/2 revision (drop them in the share; see LR-002 P1).
 - Headline numbers: the tile cannot tune below 4900 MHz (datasheet-backed); the Part 15 EIRP ceiling at 915 MHz is 36 dBm for any antenna; the tile LO's −42 dBc spurs sit above the 8-bit floor; four interleaved channels at 26 MSPS use 59 % of the CSI link; the whole-band channeliser costs about 0.73 of one core; the datasheet-typical receive NF is 1.3 dB and the PA is 26 dBm linear per element.

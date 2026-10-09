@@ -90,6 +90,17 @@ regulatory filing (U-005-2).
 | `gr-lora_sdr` | https://github.com/tapparelj/gr-lora_sdr | `862746dd1cf635c9c8a4bfbaa2c3a0ec3a5306c9` (2026-01-05) | Reference SDR LoRa transceiver (test oracle only) |
 | `meshtastic-firmware` | https://github.com/meshtastic/firmware | `364a111f4a5601708f3b9d60527aca02b6ac73ef` (2026-10-08) | RadioInterface abstraction, SimRadio, licensed-mode power logic, Linux config-dist.yaml and config.d templates |
 
+## resources/oracle/, resources/build/, resources/corpus/, resources/tmp/ — built and generated here (backlog V-08)
+
+Not downloads: products of the scripts named, reproducible from the clone
+above and the VM's packages. Nothing in them is committed.
+
+| Path | Produced by | Identity | Purpose |
+| --- | --- | --- | --- |
+| `oracle/` (+ `build/gr-lora_sdr/`) | `scripts/build-oracle.sh` (`make oracle`): `gr-lora_sdr` at `862746dd1cf635c9c8a4bfbaa2c3a0ec3a5306c9` built against Alpine `gnuradio` 3.10.12.0-r12 into this private prefix; versions in `oracle/VERSION.txt` | GPL-3.0, run as a separate process only (`vendor/tapparel-gr-lora_sdr/ATTRIBUTION.md`) | LoRa test oracle: transmitter for the corpus, receiver for the reference PER (`docs/lora-corpus.md`) |
+| `corpus/qrf-lora-v1/` | `scripts/make-corpus.py generate` then `verify` (`make corpus`), seed 20261008, 4 × BW, ±2 ppm, 2026-10-08 | 37 cells, 111 files, 3.4 GB; `MANIFEST.json` (sha256 of every file) itself `4cce02e671b2399a7c2b7b89ab5736076adca38790a13e960ae414a56502803d`; `make corpus-check` compares | The R-08 test corpus with recorded truth and the oracle's per-cell result |
+| `tmp/` | the generator's and verifier's intermediates (removed after each cell) | — | Kept off `/tmp`, a 1.2 GB tmpfs on the VM |
+
 ## Secondary web sources consulted (not stored; facts from them are `[C]`)
 
 - Crowd Supply campaign page https://www.crowdsupply.com/scale-rf/quadrf (specs table, open-source statement, pricing; ships 2026-11-30 per page on 2026-10-08)

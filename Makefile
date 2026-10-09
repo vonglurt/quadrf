@@ -2,7 +2,7 @@
 PY := python3 -I
 TMP := $(shell mktemp -d 2>/dev/null || echo /tmp/quadrf-make)
 
-.PHONY: check lint links cites analysis sh-syntax rust parity deny audit vendor-cfr fetch import clean
+.PHONY: check lint links cites analysis sh-syntax rust parity deny audit vendor-cfr fetch import oracle corpus corpus-check clean
 
 ## check: everything that must pass before a commit
 check: lint links cites analysis sh-syntax rust parity deny
@@ -23,6 +23,7 @@ analysis:
 sh-syntax:
 	sh -n scripts/fetch-resources.sh
 	sh -n scripts/import-shared.sh
+	sh -n scripts/build-oracle.sh
 
 ## rust: build the workspace with the locked dependency set (SPEC-008 S-008-13)
 rust:
@@ -53,6 +54,18 @@ fetch:
 
 import:
 	sh scripts/import-shared.sh
+
+## oracle: build gr-lora_sdr (GPL-3.0; a separate process, never linked) into resources/oracle (backlog V-08)
+oracle:
+	sh scripts/build-oracle.sh
+
+## corpus: the LoRa I/Q test corpus with the oracle's decode result per cell (backlog V-08); CORPUS_ARGS="--cells r08" restricts it
+corpus:
+	$(PY) scripts/make-corpus.py generate $(CORPUS_ARGS)
+
+## corpus-check: every corpus file's sha256 against resources/corpus/qrf-lora-v1/MANIFEST.json
+corpus-check:
+	$(PY) scripts/make-corpus.py check
 
 clean:
 	rm -rf target

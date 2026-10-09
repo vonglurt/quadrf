@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | Status | Draft |
-| Revision | 0 |
+| Revision | 1 |
 | Date | 2026-10-08 |
 | Subject | How a physical sensor (the tile, a USB SDR, a LoRa HAT or stick, a GNSS receiver) becomes a plug-in process; the typed messages every plug-in publishes; the time base and coordinate frame that let two sensors' outputs be drawn on one overlay |
 | Primary sources | SPEC-001, SPEC-002, SPEC-004 rev 2, SPEC-008, SPEC-011; `analysis/linkbudget.py` T14, T20; `lab/LR-003`, `lab/LR-005` |
@@ -24,8 +24,8 @@ Discovery and supervision:
 
 Schema (protobuf package `qrf.v1`, append-only; a breaking change is a new package):
 
-- S-009-4. Every message starts with `Header { sensor_id: string, seq: u64, t_tai_ns: i64, t_mono_ns: i64, clock_quality: enum {PPS, NTP, FREE} }`. `[D]`
-- S-009-5. Message types: `Spectrum { f_start_hz, f_step_hz, n_avg, bins_dbm: [f32] }`; `Occupancy { plan: string, slots: [ { power_dbm, duty, az_deg, az_sigma_deg } ] }` for the 104-slot US plan or any declared plan; `Bearing { f_hz, az_deg, el_deg, sigma_deg, snr_db, burst_id }`; `LoraFrame { f_hz, sf, bw_hz, cr, snr_db, rssi_dbm, cfo_hz, bearing: Bearing, crc_ok, payload: bytes, t_start_ns }`; `Scatter { points: [ { az_deg, el_deg, power_dbm, f_hz } ] }` for the tile's swept-LO view; `Calibration { element_pos_m: [[x,y,z]], element_gain: [[re,im]], f_hz }`; `Health { cpu_pct, temp_c, loss_events, msgs_per_s, device_present }`. Angles are degrees, true-north azimuth clockwise, elevation positive up; powers are dBm at the antenna port unless `Calibration` is absent, in which case they are dBFS and flagged. `[D]` (SPEC-003 S-003-8 slot plan)
+- S-009-4. Every message starts with `Header { sensor_id: string, seq: u64, t_tai_ns: i64, t_mono_ns: i64, clock_quality: enum {PPS, NTP, FREE}, power_ref: enum {DBM, DBFS} }`; `seq` increases by one per message of the sensor across all types; `power_ref` is the flag S-009-5 requires. `[D]`
+- S-009-5. Message types: `Spectrum { f_start_hz, f_step_hz, n_avg, bins_dbm: [f32] }`; `Occupancy { plan: string, slots: [ { power_dbm, duty, az_deg, az_sigma_deg } ] }` for the 104-slot US plan or any declared plan; `Bearing { f_hz, az_deg, el_deg, sigma_deg, snr_db, burst_id }`; `LoraFrame { f_hz, sf, bw_hz, cr, snr_db, rssi_dbm, cfo_hz, bearing: Bearing, crc_ok, payload: bytes, t_start_ns }`; `Scatter { points: [ { az_deg, el_deg, power_dbm, f_hz } ] }` for the tile's swept-LO view; `Calibration { element_pos_m: [[x,y,z]], element_gain: [[re,im]], f_hz }`; `Health { cpu_pct, temp_c, loss_events, msgs_per_s, device_present, throttled }` (`throttled`: messages the S-009-10 limiter dropped since start). Angles are degrees, true-north azimuth clockwise, elevation positive up; powers are dBm at the antenna port unless `Calibration` is absent, in which case they are dBFS and flagged. `[D]` (SPEC-003 S-003-8 slot plan)
 
 Time and geometry:
 
@@ -66,3 +66,4 @@ Conformance:
 | Rev | Date | Change |
 | --- | --- | --- |
 | 0 | 2026-10-08 | Draft |
+| 1 | 2026-10-08 | S-009-4: `power_ref` in `Header` (the flag S-009-5 requires) and the `seq` rule; S-009-5: `throttled` in `Health` (the count S-009-10 requires). Both found while writing the wire schema `crates/qrf-bus/proto/qrf/v1/qrf.proto` (backlog R-02) |

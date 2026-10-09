@@ -34,7 +34,7 @@ of carried-forward facts into the next step. The design track is ledgered in
 | `crates/`, `Cargo.toml` | The qrf Cargo workspace; `qrf-analysis` is the byte-identical Rust port of the analysis |
 | `Makefile` | `make check` runs every linter, the analysis, the Rust build and the Rust/Python parity test |
 | `vendor/` | Licence ledger per upstream, own-words summaries of what we may not copy, public-domain CFR text |
-| `scripts/` | Fetch, import, vendor, tag-lint, link-check and citation-check tools |
+| `scripts/` | Fetch, import, vendor, tag-lint, link-check and citation-check tools; the LoRa oracle build and test-corpus generator |
 | `resources/` | Gitignored raw sources (vendor docs, CFR pages, datasheets, cloned repos) |
 
 ## State of the investigation (2026-10-08)

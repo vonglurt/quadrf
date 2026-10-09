@@ -17,10 +17,12 @@ unmodified use) and reject GPL crates in MIT binaries.
 | `num-complex`, `ndarray` | 0.4.6 / 0.17.2 | MIT OR Apache-2.0 | numerics |
 | `wide`, `pulp` | 1.7.1 / 0.22.3 | Zlib OR Apache-2.0 OR MIT; MIT | portable SIMD (NEON) |
 | `tokio`, `axum`, `tokio-tungstenite` | 1.53.2 / 0.8.9 / 0.30.0 | MIT | async runtime, HTTP, WebSocket for the overlay |
-| `zeromq` | 0.6.0 | MIT | native-Rust ZeroMQ for the feed bus (vendor tools speak ZeroMQ) |
-| `prost` | 0.14.4 | Apache-2.0 | protobuf schema for bus messages |
+| `zeromq` | 0.6.0 (in use since R-02) | MIT | native-Rust ZeroMQ for the feed bus (vendor tools speak ZeroMQ) |
+| `prost` | 0.14.4 (in use since R-02) | Apache-2.0 | protobuf schema for bus messages |
+| `prost-build`, `protox` | 0.14.4 / 0.10.0 (build-dependencies since R-02) | Apache-2.0; MIT OR Apache-2.0 | compile `qrf.proto` at build time without a system `protoc` |
+| `bytes` | 1.12.1 (in use since R-02) | MIT | message frames |
 | `serde` | 1.0.229 | MIT OR Apache-2.0 | configuration files |
-| `memmap2`, `nix`, `libc` | 0.9.11 / 0.31.3 / 0.2.190 | MIT OR Apache-2.0 | ring mmap and ioctls on `/dev/csi_stream0` |
+| `memmap2`, `nix`, `libc` | 0.9.11 / 0.31.3 (`nix` in use since R-02 for CLOCK_TAI) / 0.2.190 | MIT OR Apache-2.0 | ring mmap and ioctls on `/dev/csi_stream0`; the two clocks of S-009-4 |
 | `gpiocdev`, `spidev`, `linux-embedded-hal` | 0.8.0 / 0.7.1 / 0.5.0 | MIT OR Apache-2.0 | GPIO and SPI for a HAT radio |
 | `sx1262` | 0.3.0 | per crate (verify) | SX1262 driver for a host-attached HAT or stick |
 | `lora-phy`, `embassy-rp` | 3.0.1 / 0.10.0 | MIT OR Apache-2.0 | Pico (RP2040) field-node firmware |
@@ -31,5 +33,8 @@ unmodified use) and reject GPL crates in MIT binaries.
 | `meshtastic` | 0.1.9 | **GPL-3.0** | Meshtastic client; usable only in a separate GPL-licensed plugin process |
 | `librtlsdr-rs` | — | **GPL-2.0** | not used |
 
-Licence columns marked "verify" are confirmed by `cargo deny` at first build
-(backlog R-02); until then they are `[C]`.
+Licence columns marked "verify" are confirmed by `cargo deny` at the first
+build that uses the crate; until then they are `[C]`. The R-02 build
+(2026-10-08) brought in `zeromq`, `prost`, `prost-build`, `protox`, `bytes`,
+`thiserror`, `tokio` and `nix` with their transitive closure, and
+`cargo deny check` passed the allow-list on it.

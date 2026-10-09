@@ -11,12 +11,12 @@ The Rust software of SPEC-008 lives here, one crate per responsibility
 | Crate | Responsibility (SPEC-008) | State 2026-10-08 |
 | --- | --- | --- |
 | `qrf-analysis` | Rust port of `analysis/linkbudget.py`, tables T1–T24; the first Rust artefact and the parity oracle for the numbers in every document | byte-identical to the Python output (`make parity`) |
-| `qrf-core` | types, configuration, time (S-008-12) | skeleton (`NAME` constant and a test); real types come with R-02/R-03 |
+| `qrf-core` | types, configuration, time (S-008-12) | `time`: CLOCK_TAI and CLOCK_MONOTONIC_RAW readers and `Stamp` (S-009-4), with tests; configuration types come with R-02b/R-03 |
 | `qrf-mipi` | `/dev/csi_stream0` ring and ioctl bindings, de-interleave (S-008-2) | skeleton: `lib.rs` names its statements; real work is R-03 |
 | `qrf-jtag` | transceiver register programming through the CSI node's JTAG ioctls (S-008-15) | skeleton: `lib.rs` names its statements; real work is R-04 |
 | `qrf-dsp` | channeliser, detector, bearing, SIMD kernels (S-008-6) | skeleton: `lib.rs` names its statements; real work is R-07 |
-| `qrf-lora` | LoRa CSS modulator/demodulator (S-008-6) | skeleton: `lib.rs` names its statements; real work is R-08 |
-| `qrf-bus` | protobuf schema and ZeroMQ transport (SPEC-009) | skeleton: `lib.rs` names its statements; real work is R-02 |
+| `qrf-lora` | LoRa CSS modulator/demodulator (S-008-6) | skeleton: `lib.rs` names its statements; real work is R-08, tested against the corpus of `docs/lora-corpus.md` (V-08: `make oracle`, `make corpus`) |
+| `qrf-bus` | protobuf schema and ZeroMQ transport (SPEC-009) | R-02 done: `proto/qrf/v1/qrf.proto` (compiled at build time by `protox` + `prost-build`), `Publisher`/`Subscriber` over the native `zeromq` crate, topic strings, `Limits`/`RateLimiter` (S-009-10); check in `tests/r02_check.rs`; examples `sim_plugin` and `bus_dump` |
 | `qrf-tiled`, `qrf-sensord`, `qrf-dspd`, `qrf-overlay`, `qrf` | the processes and CLI (S-008-1) | skeletons that identify themselves and exit; real work is R-10, R-02b, R-09 |
 | `qrf-node-pico` | RP2040 field-node firmware, separate target (S-008-11) | not started (F-06); lives outside this workspace because of its target |
 

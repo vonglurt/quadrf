@@ -1,0 +1,131 @@
+// qrf.v1 — the feed-bus schema (SPEC-009 S-009-4, S-009-5). Append-only: a
+// breaking change is a new package (qrf.v2), never an edit here.
+// Units: Hz, dBm (or dBFS when Header.power_ref says so), degrees (azimuth
+// true north clockwise, elevation positive up), metres, nanoseconds.
+// SPDX-License-Identifier: MIT
+syntax = "proto3";
+
+package qrf.v1;
+
+// S-009-4: the clock that disciplined t_tai_ns. FREE widens the overlay's
+// association window from 100 ms to 1 s (S-009-6).
+enum ClockQuality {
+  CLOCK_QUALITY_UNSPECIFIED = 0;
+  CLOCK_QUALITY_PPS = 1;
+  CLOCK_QUALITY_NTP = 2;
+  CLOCK_QUALITY_FREE = 3;
+}
+
+// S-009-5: powers are dBm at the antenna port when the sensor has published a
+// Calibration; without one they are dBFS and must be flagged as such.
+enum PowerRef {
+  POWER_REF_UNSPECIFIED = 0;
+  POWER_REF_DBM = 1;
+  POWER_REF_DBFS = 2;
+}
+
+// S-009-4: every message starts with this.
+message Header {
+  string sensor_id = 1;
+  uint64 seq = 2;            // per sensor, across all types, increasing by one per message
+  int64 t_tai_ns = 3;        // CLOCK_TAI
+  int64 t_mono_ns = 4;       // CLOCK_MONOTONIC_RAW
+  ClockQuality clock_quality = 5;
+  PowerRef power_ref = 6;    // applies to every power in the message
+}
+
+// S-009-5 Spectrum: ≤ 4096 bins, ≤ 5 Hz (S-009-10).
+message Spectrum {
+  Header header = 1;
+  double f_start_hz = 2;
+  double f_step_hz = 3;
+  uint32 n_avg = 4;
+  repeated float bins_dbm = 5;
+}
+
+message Slot {
+  float power_dbm = 1;
+  float duty = 2;            // 0..1 over the estimator's window
+  float az_deg = 3;
+  float az_sigma_deg = 4;
+}
+
+// S-009-5 Occupancy: one Slot per slot of the named plan ("us-915-104" for
+// the 104-slot Meshtastic US plan, SPEC-003 S-003-8); ≤ 10 Hz.
+message Occupancy {
+  Header header = 1;
+  string plan = 2;
+  repeated Slot slots = 3;
+}
+
+// S-009-5 Bearing: per burst.
+message Bearing {
+  Header header = 1;
+  double f_hz = 2;
+  float az_deg = 3;
+  float el_deg = 4;
+  float sigma_deg = 5;
+  float snr_db = 6;
+  uint64 burst_id = 7;
+}
+
+// S-009-5 LoraFrame: per decoded air frame; `bearing` may be absent.
+message LoraFrame {
+  Header header = 1;
+  double f_hz = 2;
+  uint32 sf = 3;
+  uint32 bw_hz = 4;
+  uint32 cr = 5;             // coding rate denominator: 5..8 for 4/5..4/8
+  float snr_db = 6;
+  float rssi_dbm = 7;
+  float cfo_hz = 8;
+  Bearing bearing = 9;
+  bool crc_ok = 10;
+  bytes payload = 11;
+  int64 t_start_ns = 12;     // CLOCK_TAI of the first preamble sample
+}
+
+message Point {
+  float az_deg = 1;
+  float el_deg = 2;
+  float power_dbm = 3;
+  double f_hz = 4;
+}
+
+// S-009-5 Scatter: the tile's swept-LO view; ≤ 4096 points, ≤ 30 Hz.
+message Scatter {
+  Header header = 1;
+  repeated Point points = 2;
+}
+
+message Vec3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message Complex {
+  float re = 1;
+  float im = 2;
+}
+
+// S-009-5 Calibration: element positions (metres, sensor frame) and complex
+// gains at f_hz; its presence turns the sensor's powers into dBm.
+message Calibration {
+  Header header = 1;
+  repeated Vec3 element_pos_m = 2;
+  repeated Complex element_gain = 3;
+  double f_hz = 4;
+}
+
+// S-009-5 Health: 1 Hz from every process (SPEC-008 S-008-7); `throttled`
+// counts messages the rate limiter dropped since start (S-009-10).
+message Health {
+  Header header = 1;
+  float cpu_pct = 2;
+  float temp_c = 3;
+  uint64 loss_events = 4;
+  float msgs_per_s = 5;
+  bool device_present = 6;
+  uint64 throttled = 7;
+}

@@ -12,7 +12,7 @@
 
 ## Abstract
 
-The 27 files committed in `af7e5e6` (8 gates, 7 clean-room specs, process
+The 27 files committed in `810feef` (8 gates, 7 clean-room specs, process
 document, templates, manifest, fetch script, analysis script) were re-read
 against their sources, against each other, and against the newly available
 primary documents (the MAX2851 datasheet supplied through the UTM share, the
@@ -38,7 +38,7 @@ manifest, a vendor ledger for licences, and a datasheet drop-folder procedure.
 
 | Item | Detail |
 | --- | --- |
-| Repository state reviewed | `af7e5e6` "Add gated investigation framework, clean-room specs and G00–G07", pushed 2026-10-08 |
+| Repository state reviewed | `810feef` "Add gated investigation framework, clean-room specs and G00–G07", pushed 2026-10-08 |
 | New primary sources | `resources/datasheets/MAX2851.pdf` (sha256 `4b6bb5e3…97db`, 37 pp., 19-5121 Rev 1); `resources/datasheets/RP1-peripherals.pdf` (RP-008370-DS-1, 93 pp.); `resources/regulatory/cfr-47-1.1310.html`, `cfr-47-97.13.html`; `resources/krakensdr/*` (4 files); `resources/lora/semtech-sx1262-product.html` |
 | Vendor sources re-read | `fpga_csi.h`, `fpga-csi.c`, `fpga-csi.dts`, `fpga-dsi.c`, `jtag.c`, `MipiDevice.cpp/.hpp`, `NEON.cpp`, `quadrf-load`, `10-boot`, `debian/copyright`, `licenses/*`, `updates.html` FAQ; `quadrf-mesh` `air-ipc-v1.md`, `quadrf-lora-phy.default`, `config.hpp`, `wander.cpp`; Meshtastic `bin/config.d/*.yaml` |
 | Tools | `scripts/lint-tags.py` (new), `analysis/linkbudget.py` T1–T20, `pdftotext` 25.12, `python3` 3.14.7 |

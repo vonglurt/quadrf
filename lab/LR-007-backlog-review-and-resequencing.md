@@ -7,12 +7,12 @@
 | Field | Value |
 | --- | --- |
 | Status | Final |
-| Author | project (review of `backlog.md` at `fc1853d`; applied the same day) |
+| Author | project (review of `backlog.md` at `3b09f1a`; applied the same day) |
 | Feeds | `backlog.md` *Sequencing* section and phases P0–P7 (eight new entries, two splits, four moves, five rewritten checks); `analysis/linkbudget.py` T24 and its Rust port; `index.md` state |
 
 ## Abstract
 
-The 53 open entries of `backlog.md` at commit `fc1853d` were read for whether
+The 53 open entries of `backlog.md` at commit `3b09f1a` were read for whether
 each check can be run on the day its phase is entered, with the tools and
 hardware that will exist then, and for dependencies that cross phase
 boundaries. Most of P2 depended on P1 crates, so only the three entries that
@@ -41,7 +41,7 @@ the critical path in dependency order, P2 waits for R-P1 and the purchases;
 
 | Item | Detail |
 | --- | --- |
-| `backlog.md` | commit `fc1853d`, 53 open, 16 done, 0 dropped |
+| `backlog.md` | commit `3b09f1a`, 53 open, 16 done, 0 dropped |
 | Specifications | SPEC-002 rev 2 (S-002-4, S-002-14…17, S-002-21), SPEC-008 rev 0 (S-008-1…15), SPEC-009 rev 0 (S-009-3, S-009-5…7, S-009-13), SPEC-010 rev 0 (S-010-9, S-010-11) |
 | Lab reports | LR-002 §P1 (sites that refuse scripted retrieval), LR-003 §C (budgets), LR-005 §VI (dongle and stick first) |
 | Development VM | Alpine 3.24.1, 4 cores, host triple `aarch64-unknown-linux-musl`, under UTM/QEMU on a Mac host (`AGENTS.md`); `gnuradio` 3.10.12.0-r12 and `py3-pyzmq` 27.1.0 installed; `resources/repos/gr-lora_sdr` at `862746d`, not built |
@@ -93,7 +93,7 @@ the critical path in dependency order, P2 waits for R-P1 and the purchases;
 
 ### F. Counts
 
-| | Before (`fc1853d`) | After |
+| | Before (`3b09f1a`) | After |
 | --- | --- | --- |
 | Open | 53 | 61 |
 | Done | 16 | 16 |
@@ -102,7 +102,7 @@ the critical path in dependency order, P2 waits for R-P1 and the purchases;
 | Moved | — | F-01, F-02, F-05: P2 → P0; V-07a: P6 → P0 |
 | Rewritten checks | — | R-03 (synthetic frames now, replay in R-03b), R-07 (budget on a Pi 5 only), R-P1 (injected yaw, declination and 300 ms delivery delay; negative control), R-08 (against the V-08 corpus, oracle PER beside ours), R-06 (shares V-08) |
 
-`[M]` (this report; `git diff fc1853d -- backlog.md`)
+`[M]` (this report; `git diff 3b09f1a -- backlog.md`)
 
 ## V. Discussion
 
@@ -150,4 +150,4 @@ to agree.
 
 ## VII. References
 
-`backlog.md` (`fc1853d` and this revision); `docs/00-process.md` §3.1, §3.5, §6; `specs/SPEC-002-quadrf-host-software.md` S-002-4, S-002-14…17, S-002-21; `specs/SPEC-008-system-architecture-rust.md` S-008-9, S-008-10, S-008-11, S-008-13; `specs/SPEC-009-sensor-plugins-and-feed-bus.md` S-009-3, S-009-5, S-009-6, S-009-7, S-009-13; `specs/SPEC-010-copal-platform.md` S-010-9, S-010-11, U-010-1, U-010-2; `investigations/G06-mountain-repeater-directional-relay.md` F.06.11; `investigations/G07-field-test-plan.md` §8; `investigations/README.md` (risk register); `lab/LR-002-operating-procedures-and-tools.md` §P1; `lab/LR-003-rust-system-architecture.md` §C; `lab/LR-005-coherent-915mhz-receiver-options-and-parallel-feed.md` §VI; `analysis/linkbudget.py` T14, T16, T19, T24; `resources/datasheets/RP1-peripherals.txt` (manifest row "RP1 peripherals").
+`backlog.md` (`3b09f1a` and this revision); `docs/00-process.md` §3.1, §3.5, §6; `specs/SPEC-002-quadrf-host-software.md` S-002-4, S-002-14…17, S-002-21; `specs/SPEC-008-system-architecture-rust.md` S-008-9, S-008-10, S-008-11, S-008-13; `specs/SPEC-009-sensor-plugins-and-feed-bus.md` S-009-3, S-009-5, S-009-6, S-009-7, S-009-13; `specs/SPEC-010-copal-platform.md` S-010-9, S-010-11, U-010-1, U-010-2; `investigations/G06-mountain-repeater-directional-relay.md` F.06.11; `investigations/G07-field-test-plan.md` §8; `investigations/README.md` (risk register); `lab/LR-002-operating-procedures-and-tools.md` §P1; `lab/LR-003-rust-system-architecture.md` §C; `lab/LR-005-coherent-915mhz-receiver-options-and-parallel-feed.md` §VI; `analysis/linkbudget.py` T14, T16, T19, T24; `resources/datasheets/RP1-peripherals.txt` (manifest row "RP1 peripherals").
